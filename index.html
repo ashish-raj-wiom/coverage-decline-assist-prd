@@ -76,6 +76,7 @@
 <p><strong>Objective.</strong> Turn a CSP&#39;s &quot;this booking is too far from me&quot; decline into a clean, point-level <strong>feedback signal that routing (Genie / DAS) can act on</strong> — so Wiom sends each booking to the <strong>most relevant CSP first</strong>, and the CSP stops being handed far, irrelevant jobs. When a CSP declines a booking as too far, the app shows him the connections he already runs nearby; this exists to make his answer <strong>deliberate and accurate</strong> — not to talk him out of declining — so a reflex tap on a job he could actually serve doesn&#39;t pollute the loop. When he confirms, we capture the exact points he is rejecting and emit them to Genie. <strong>The win is mutual:</strong> the CSP is no longer surfaced for bookings he genuinely can&#39;t serve, and Wiom routes to a nearer CSP instead. This feature owns the <strong>capture and emit</strong>; Genie and DAS act on the signal.</p>
 <p><strong>What success is — and isn&#39;t.</strong> Success is a <strong>trustworthy feedback loop into routing</strong>, not a lower decline rate and not making CSPs reconsider. A confirmed &quot;too far&quot; decline is a <em>good</em> outcome — it is correct information the routing system needs. The intercept&#39;s only job is to keep that information accurate.</p>
 <p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the coverage reason — the CSP says <strong>the booking is too far from him</strong> (the location is not serviceable / too far) — at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>blocking confirm</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>emitting that signal to Genie</strong>. Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the flag <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the emitted signal (G1).</p>
+<p><strong>What Genie does on receiving the signal is out of scope</strong> — the unit, threshold, de-listing and any re-routing are all Genie&#39;s. The signal is <strong>pushed</strong> to Genie as an explicit, self-describing event, <strong>not</strong> written to a table for Genie to poll; an explicit push is the cleaner contract (R3c).</p>
 <h3>Guardrails — promises that hold on every path</h3>
 <table>
 <thead>
@@ -109,6 +110,12 @@
 <td><strong>Capture-only</strong></td>
 <td>This feature captures and emits a signal; Genie decides the unit, threshold and consequence, and DAS routes. It commands nothing.</td>
 <td>R3 · AC-GRD-1 · MQ-2</td>
+</tr>
+<tr>
+<td>G5</td>
+<td><strong>Emitted only for this reason</strong></td>
+<td>A signal is pushed to Genie <strong>only</strong> for the coverage reason (booking too far) — never for any other decline / install-failure reason.</td>
+<td>R3 · AC-REG-1</td>
 </tr>
 </tbody></table>
 <h3>Success metrics</h3>
@@ -173,8 +180,8 @@
 <tr>
 <td>R3</td>
 <td>As Wiom, when the CSP confirms &quot;I won&#39;t be able to connect&quot;, I remove the booking, capture the deliberate decline and the points he rejected, and send them to Genie.</td>
-<td><strong>(a)</strong> Record the coverage decline / install-failure as <strong>deliberate</strong> — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a <strong>decline</strong> (pre-acceptance) removes the booking; an <strong>install-failure</strong> (post-acceptance) records the failure and hands the task back for re-routing. <strong>(b)</strong> Capture the exact points he was shown (from Genie&#39;s API) as the points he is rejecting. <strong>(c)</strong> Emit the signal to Genie carrying the CSP, the capture point, and the rejected points.</td>
-<td>Flag any point that was not shown to him (G1).</td>
+<td><strong>(a)</strong> Record the coverage decline / install-failure as <strong>deliberate</strong> — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a <strong>decline</strong> (pre-acceptance) removes the booking; an <strong>install-failure</strong> (post-acceptance) records the failure and hands the task back for re-routing. <strong>(b)</strong> Capture the exact points he was shown (from Genie&#39;s API), <strong>in the order they were shown</strong>, as the points he is rejecting. <strong>(c)</strong> <strong>Push</strong> an explicit signal to Genie carrying: the <strong>connection id and customer id</strong> (the booking), the <strong>CSP</strong>, whether it was a <strong>decline or an install-failure</strong>, the <strong>coverage reason</strong> (booking too far), and the <strong>points he was shown, in order</strong>, as the points he rejected.</td>
+<td>Flag any point that was not shown to him (G1); push a signal for any non-coverage reason (G5); or leave the signal in a database for Genie to poll instead of pushing it.</td>
 </tr>
 <tr>
 <td>R4</td>
@@ -377,7 +384,7 @@
 </thead>
 <tbody><tr>
 <td>AC-CONF-1</td>
-<td><strong>Given</strong> a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie&#39;s range, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is emitted to Genie carrying the CSP, the capture point (decline), and those 3 points as rejected.</td>
+<td><strong>Given</strong> a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie&#39;s range, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is <strong>pushed</strong> to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points <strong>in the order shown</strong> as rejected.</td>
 <td>R3a · R3b · R3c · T1 · G4</td>
 <td>Settled</td>
 </tr>
@@ -485,8 +492,8 @@
 </thead>
 <tbody><tr>
 <td>AC-REG-1</td>
-<td><strong>Given</strong> this feature ships, <strong>When</strong> a CSP declines for any <strong>non-coverage</strong> reason, <strong>Then</strong> the reason-capture flow (Part 1) is unchanged — no assist, no Genie fetch — and routing / DAS behave exactly as before.</td>
-<td>§1 Boundary</td>
+<td><strong>Given</strong> this feature ships, <strong>When</strong> a CSP declines for any <strong>non-coverage</strong> reason, <strong>Then</strong> the reason-capture flow (Part 1) is unchanged — no intercept, no Genie fetch, <strong>and no signal pushed to Genie</strong> — and routing / DAS behave exactly as before.</td>
+<td>§1 Boundary · G5</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -578,6 +585,11 @@
 <td>—</td>
 </tr>
 <tr>
+<td>Coverage signal</td>
+<td><strong>Canonical definition:</strong> the explicit event this feature <strong>pushes</strong> to Genie when a CSP confirms a coverage decline — <em>for this connection id + customer id, this CSP declined / marked install-failure for the far-distance reason even after being shown these active-connection / splitter points, in this order</em>. Pushed, not polled; emitted only for this reason (G5); never carries a point not shown (G1).</td>
+<td>—</td>
+</tr>
+<tr>
 <td>Back-off</td>
 <td>The CSP tapping &quot;OK, I&#39;ll connect&quot; at the intercept — he reconsiders and keeps the job; nothing is recorded or emitted (T2, G3).</td>
 <td>—</td>
@@ -611,8 +623,8 @@
 <td>R3 · G1</td>
 </tr>
 <tr>
-<td>Emit the signal to Genie — CSP, capture point, rejected points — taking no routing or de-listing action itself.</td>
-<td>R3c · G4</td>
+<td>Push an explicit signal to Genie — connection + customer id, CSP, decline vs install-failure, the coverage reason, and the ordered points shown as rejected — for the coverage reason only, taking no routing or de-listing action itself, and not relying on Genie to read it from a database.</td>
+<td>R3c · G4 · G5</td>
 </tr>
 <tr>
 <td>Let the CSP complete his decline when the points can&#39;t be shown (none, or API not in time), never blocking him.</td>
