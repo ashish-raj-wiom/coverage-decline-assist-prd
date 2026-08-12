@@ -1,0 +1,18 @@
+# Decline due to Location is Far — CSP Assist & Capture — Tradeoffs Register
+
+Companion to `Coverage_Decline_Assist_PRD.md` (v1.0, signed off 12 Aug 2026). This records the decisions the PM made between presented options — the "why" behind the spec, for later reference. It is **not** part of the PRD.
+
+| # | Decision point | Chosen | Rejected options | Why (PM's stated reason) | Date |
+|---|---|---|---|---|---|
+| 1 | What "success" means | **Feedback-loop integrity (M1)** — a trustworthy, accurate signal into routing | A lower decline rate; a reconsideration/back-off target | A confirmed "too far" decline is *good information* the routing system needs; the intercept only exists to keep that information accurate, not to reduce declines | 12 Aug 2026 |
+| 2 | The reconsideration / back-off rate | **Diagnostic only (MQ-1), never a target** | Treat it as a headline success metric | It measures signal quality (are reflex declines being filtered) — not the goal | 12 Aug 2026 |
+| 3 | The routing outcome metric | **Split into M2 (first-CSP decline rate ↓), M3 (decline share ↓), M4 (prevented mis-routes)** | One bundled "routing outcome" metric; a "median booking-to-CSP distance ↓" metric | Distance-falling was the wrong premise — we do not route CSPs to nearby bookings; the real outcome is the *first* CSP declining "too far" less because Genie stops routing far bookings to him | 12 Aug 2026 |
+| 4 | The intercept form | **Blocking modal** — the CSP must pick one of two actions, no dismiss | A non-blocking nudge; a dismissible sheet | The answer must be deliberate; a dismiss path would let a decline finalise (or not) without an explicit choice | 12 Aug 2026 |
+| 5 | Capture points | **Both** — pre-acceptance decline and post-acceptance install-failure, identical assist | Decline only; on-site only | The signal must be complete regardless of when the CSP realises it's too far | 12 Aug 2026 |
+| 6 | Back-off recording | **No decline, no signal — but the back-off event IS logged** for MQ-1 | Record nothing at all on back-off | Only the *decline* is absent (none happened); the back-off event is needed to measure the reconsideration diagnostic | 12 Aug 2026 |
+| 7 | No informed decision (timeout / no points) | **Finalise the decline but send NO signal (T3)** | Emit the signal without a rejected-points list | With no points shown, the CSP made no informed decision — there is nothing trustworthy to report to Genie | 12 Aug 2026 |
+| 8 | Delivery mechanism | **Push** an explicit signal to Genie | Write to a table for Genie to poll | An explicit push is a cleaner, self-describing contract; avoids DB coupling (recorded as an Override) | 12 Aug 2026 |
+| 9 | Signal scope | **Only for the Location is Far reason (G5); only points shown (G1)** | Emit for other reasons; allow points not shown | Keeps the loop clean and the signal honest; every other reason leaves DAS/CLOS untouched | 12 Aug 2026 |
+| 10 | Signal identity of rejected points | **The served point records echoed back, in order — no separate point id** | Mint a separate stable point id | The points round-trip: Genie served them and receives them back, so it can identify them without a new id | 12 Aug 2026 |
+| 11 | Configurability | **None** — the wait-for-Genie is a fixed Eng timeout, not a business config | Expose the wait window as a tunable parameter | Nothing here is a product-tunable value; the only knob is an implementation timeout | 12 Aug 2026 |
+| 12 | Terminology | **"Location is Far" / "Decline due to Location is Far"**; Genie acts directly, DAS only indirectly | "Coverage" wording; "(Genie / DAS) act on the signal" | Clear for the audience; DAS routes on what Genie sends next, so it is affected indirectly, not directly | 12 Aug 2026 |

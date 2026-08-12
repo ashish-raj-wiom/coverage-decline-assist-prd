@@ -2,8 +2,8 @@
 
 | | | | |
 |---|---|---|---|
-| **Owner** — Ashish Raj (PM) | **Reviewer** — Saurabh Goyal | **Status** — Draft | **Sign-off** — Pending |
-| **Version** — v0.1 · 11 Aug 2026 | **Consulted — Genie (serviceability)** — Maanas | | |
+| **Owner** — Ashish Raj (PM) | **Reviewer** — Saurabh Goyal | **Status** — Signed off | **Sign-off** — Signed off · 12 Aug 2026 |
+| **Version** — v1.0 · 12 Aug 2026 | **Consulted — Genie (serviceability)** — Maanas | | |
 
 ---
 
@@ -32,9 +32,9 @@
 | ID | Metric | Baseline | Target | Source |
 |---|---|---|---|---|
 | M1 | **Feedback-loop integrity** — of deliberate Location is Far declines, the share that emit a valid point-level signal to Genie (CSP + capture point + only the points shown as rejected) | n/a — new capability | 100% | MQ-2 |
-| M2 | **First-CSP Location is Far decline rate ↓ (loop-level, Genie-driven)** — the CSP a booking is **first routed to** declines it for the Location is Far reason less often, because Genie stops routing far bookings to CSPs who have said they can't serve there — so bookings need fewer re-routes to be accepted | current first-CSP Location is Far decline rate — to fill ⚠️ *AI GENERATED — review* | Down and trending | MQ-4 |
-| M3 | **Location is Far decline share ↓ (loop-level, Genie-driven)** — the share of bookings declined for the Location is Far reason falls, as far / irrelevant bookings stop being routed to a CSP who can't serve them | current Location is Far decline share — to fill ⚠️ *AI GENERATED — review* | Down and trending | MQ-5 |
-| M4 | **Prevented mis-routes (loop-level, Genie-driven)** — future bookings near a rejected point for which this CSP is **no longer surfaced** in Genie's candidate list, so **no task is created** for him — jobs that, before his signal, would have been routed to him | n/a — new capability | Grows as Genie acts on the signals — each one is an irrelevant task the CSP is spared and a routing attempt Wiom saves ⚠️ *AI GENERATED — review* | MQ-6 |
+| M2 | **First-CSP Location is Far decline rate ↓ (loop-level, Genie-driven)** — the CSP a booking is **first routed to** declines it for the Location is Far reason less often, because Genie stops routing far bookings to CSPs who have said they can't serve there — so bookings need fewer re-routes to be accepted | measured at launch — current first-CSP Location is Far decline rate (loop-level) | Down and trending | MQ-4 |
+| M3 | **Location is Far decline share ↓ (loop-level, Genie-driven)** — the share of bookings declined for the Location is Far reason falls, as far / irrelevant bookings stop being routed to a CSP who can't serve them | measured at launch — current Location is Far decline share (loop-level) | Down and trending | MQ-5 |
+| M4 | **Prevented mis-routes (loop-level, Genie-driven)** — future bookings near a rejected point for which this CSP is **no longer surfaced** in Genie's candidate list, so **no task is created** for him — jobs that, before his signal, would have been routed to him | n/a — new capability | Grows as Genie acts on the signals — each one is an irrelevant task the CSP is spared and a routing attempt Wiom saves | MQ-6 |
 
 **This feature's own success is M1 — the loop is clean and complete.** M2–M4 are the loop's downstream payoff and are driven by **Genie acting on the signal**, not by this feature alone; they are tracked at the loop level, not owned here. Their integrity rests on the signal being accurate — the intercept and G1 keep it so.
 
@@ -51,7 +51,7 @@
 | R1 | As a CSP about to decline a booking because it's too far from me, I first see the connections I already run nearby, so I don't refuse a job I can serve. | **(a)** When he **submits** a decline / install-failure with the Location is Far reason, fetch his nearby active/splitter points from **Genie's API** and show a **blocking confirm** (the "Location is Far intercept") — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised. **(b)** Require an explicit choice — **"I won't be able to connect"** (confirm) or **"OK, I'll connect"** (reconsider). | Finalise the Location is Far decline without the intercept when nearby points exist and can be shown. |
 | R2 | As a CSP who reconsiders, tapping "OK, I'll connect" returns me to the job with nothing held against me. | **(a)** On reconsider, submit no decline and keep the booking with the CSP. **(b)** Send no signal to Genie. **(c)** Record the back-off event — the intercept was shown and he reconsidered — for measurement (MQ-1). | Record a decline, or send any signal to Genie, on a reconsider. |
 | R3 | As Wiom, when the CSP confirms "I won't be able to connect", I remove the booking, capture the deliberate decline and the points he rejected, and send them to Genie. | **(a)** Record the Location is Far decline / install-failure as **deliberate** — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a **decline** (pre-acceptance) removes the booking; an **install-failure** (post-acceptance) records the failure and hands the task back for re-routing. **(b)** Capture the exact points he was shown (from Genie's API), **in the order they were shown**, as the points he is rejecting. **(c)** **Push** an explicit signal to Genie carrying: the **connection id and customer id** (the booking), the **CSP**, whether it was a **decline or an install-failure**, the **Location is Far reason** (booking too far), and the **points he was shown, in order**, as the points he rejected. | Send Genie any point that was not shown to him (G1); push a signal for any reason other than Location is Far (G5); or leave the signal in a database for Genie to poll instead of pushing it. |
-| R4 | As a CSP, I can always complete my decline even when the nearby points can't be shown. | **(a)** If Genie returns no nearby points, or its API does not respond in time, let the Location is Far decline proceed without the intercept — record it, but **send no signal to Genie**: the CSP was shown nothing, so he made no informed decision and there is nothing to report. **(b)** Tell the CSP the check was skipped, not that it failed. ⚠️ *AI GENERATED — review* | Block, trap, or spin the CSP because the intercept could not load (G2); or send Genie a signal from a decline where no points were shown. |
+| R4 | As a CSP, I can always complete my decline even when the nearby points can't be shown. | **(a)** If Genie returns no nearby points, or its API does not respond in time, let the Location is Far decline proceed without the intercept — record it, but **send no signal to Genie**: the CSP was shown nothing, so he made no informed decision and there is nothing to report. **(b)** Tell the CSP the check was skipped, not that it failed. | Block, trap, or spin the CSP because the intercept could not load (G2); or send Genie a signal from a decline where no points were shown. |
 | R5 | As Wiom, I want the same assist and capture at both moments a Location is Far reason is given, so the signal is complete. | Run the identical assist + capture at a **decline** (pre-acceptance) and an **install-failure report** (after acceptance). | Let the two paths capture differently, or skip the assist at one of them. |
 
 ---
@@ -87,7 +87,7 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 ## 4. Screen Requirements
 
-**Experience intent:** the app is on the CSP's side — *"before you turn this down, here's what you already run nearby"* — and honest about what happens next (*"we'll stop sending you bookings here so your time isn't wasted"*). Never nagged, never blocked. ⚠️ *AI GENERATED — review*
+**Experience intent:** the app is on the CSP's side — *"before you turn this down, here's what you already run nearby"* — and honest about what happens next (*"we'll stop sending you bookings here so your time isn't wasted"*). Never nagged, never blocked.
 
 **Master design file:** Figma · "PA — Dev → January 2026 Onwards" (CSP app) — [design & assets](https://figma.com/design/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev-->-January-2026-Onwards?t=sU3hI2FvbPQONDUO-0) · [interactive prototype](https://www.figma.com/proto/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?node-id=10827-2818&viewport=382%2C-6863%2C0.44&t=mwwU62RAMEkIo0IQ-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=10827%3A2818&show-proto-sidebar=1&page-id=9780%3A1268). Frames **S2** (reason sheet, Part 1), **S1** (Location is Far intercept), **S4** (confirmation).
 
@@ -97,6 +97,7 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 **States:** loading (fetching points, brief wait) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
 **Freshness:** the points and distances reflect Genie's API response for this booking at the moment of submit.
+**Modal:** the intercept is a **blocking modal** — the CSP must pick one of the two actions; there is no dismiss-without-choosing (R1b).
 
 | Element | Source / Routes to | Logic |
 |---|---|---|
@@ -116,7 +117,7 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 | Field — outcome + reason | reason-capture (R3a) | confirms the outcome and shows his reason (the booking was too far to serve); copy is capture-point-specific — "booking removed" on a decline, failure recorded on an install-failure |
 | Action — OK | — | dismisses to the feed |
 
-**Skipped (no intercept).** When Genie returns no nearby points or its API is not in time, the intercept (S1) is not shown; the decline is finalised (T3) with **no signal sent to Genie** (no informed decision), and the CSP sees a neutral "we couldn't check nearby connections" note — never an error that blocks (R4b, G2). ⚠️ *AI GENERATED — review*
+**Skipped (no intercept).** When Genie returns no nearby points or its API is not in time, the intercept (S1) is not shown; the decline is finalised (T3) with **no signal sent to Genie** (no informed decision), and the CSP sees a neutral "we couldn't check nearby connections" note — never an error that blocks (R4b, G2).
 
 ---
 
@@ -133,9 +134,9 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 | MQ-1 | Of Location is Far declines where the intercept was shown, what share backed off ("OK, I'll connect")? — signal-quality diagnostic, not a target | diagnostic · G3 |
 | MQ-2 | For every emitted signal, was it for the Location is Far reason only (never another reason) and carrying only the points that were shown? | M1 · G1 · G4 · G5 invariant |
 | MQ-3 | Of Location is Far declines, how many saw the intercept vs proceeded without it (no points / API not in time)? | R4 · G2 |
-| MQ-4 | Over time, does the first-routed CSP decline for the Location is Far reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie) | M2 ⚠️ *AI GENERATED — review* |
-| MQ-5 | Over time, does the Location is Far decline share fall as far / irrelevant bookings stop being routed to a CSP who can't serve them? (loop outcome, driven by Genie) | M3 ⚠️ *AI GENERATED — review* |
-| MQ-6 | Per CSP × rejected point, how many future bookings did Genie exclude him from the candidate list for — because of his Location is Far signal — that it would have surfaced him for before, i.e. tasks never created for him? (loop outcome, driven by Genie) | M4 ⚠️ *AI GENERATED — review* |
+| MQ-4 | Over time, does the first-routed CSP decline for the Location is Far reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie) | M2 |
+| MQ-5 | Over time, does the Location is Far decline share fall as far / irrelevant bookings stop being routed to a CSP who can't serve them? (loop outcome, driven by Genie) | M3 |
+| MQ-6 | Per CSP × rejected point, how many future bookings did Genie exclude him from the candidate list for — because of his Location is Far signal — that it would have surfaced him for before, i.e. tasks never created for him? (loop outcome, driven by Genie) | M4 |
 | MQ-7 | Per task, how many bookings timed out with **no action from the CSP** — the **P41 / P74** timeouts — so passive timeouts are told apart from deliberate Location is Far declines? | diagnostic (M2 / M3 interpretation) |
 | MQ-8 | Is every screen shown and every CTA tapped across the flow — the Location is Far intercept (S1), the confirmation (S4), and the two actions ("I won't be able to connect" / "OK, I'll connect") — captured as an event (**preferably in CleverTap**), so the full funnel (intercept shown → confirm / reconsider / skipped) can be analysed? | MQ-1 · MQ-3 · G3 · R2c |
 
@@ -160,7 +161,7 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-STR-1 | **Given** a CSP selects the Location is Far reason and Genie returns no nearby points, **When** he confirms the decline, **Then** the Location is Far decline is recorded, **no signal is sent to Genie** (no points were shown, so no informed decision), and he is told the nearby check was skipped. | R4a · R4b · T3 · G2 | Settled ⚠️ *AI GENERATED — review* |
+| AC-STR-1 | **Given** a CSP selects the Location is Far reason and Genie returns no nearby points, **When** he confirms the decline, **Then** the Location is Far decline is recorded, **no signal is sent to Genie** (no points were shown, so no informed decision), and he is told the nearby check was skipped. | R4a · R4b · T3 · G2 | Settled |
 
 ### WF — Workflows (both capture points)
 
@@ -191,13 +192,13 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-RACE-1 | **Given** the app already proceeded without the intercept and the decline was recorded straight (T3), **When** Genie's points arrive afterwards, **Then** they are ignored — the recorded decline stands and no intercept is retro-shown. | §3a precedence | Settled ⚠️ *AI GENERATED — review* |
+| AC-RACE-1 | **Given** the app already proceeded without the intercept and the decline was recorded straight (T3), **When** Genie's points arrive afterwards, **Then** they are ignored — the recorded decline stands and no intercept is retro-shown. | §3a precedence | Settled |
 
 ### DUP — Duplicate trigger
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-DUP-1 | **Given** a Location is Far decline already recorded and emitted, **When** the CSP double-taps "I won't be able to connect", **Then** exactly one decline and one signal exist for that event. | T1 | Settled ⚠️ *AI GENERATED — review* |
+| AC-DUP-1 | **Given** a Location is Far decline already recorded and emitted, **When** the CSP double-taps "I won't be able to connect", **Then** exactly one decline and one signal exist for that event. | T1 | Settled |
 
 ---
 
@@ -225,22 +226,9 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | Show a blocking confirm with those points and two choices — reconsider, or confirm not serviceable. | R1 · T1 · T2 |
 | Capture the deliberate decline and the exact points shown as rejected — never a point not shown. | R3 · G1 |
 | Push an explicit signal to Genie — connection + customer id, CSP, decline vs install-failure, the Location is Far reason, and the ordered points shown as rejected — for the Location is Far reason only, taking no routing or de-listing action itself, and not relying on Genie to read it from a database. | R3c · G4 · G5 |
-| Deliver that pushed signal reliably — a confirmed deliberate decline must not silently lose its signal if Genie is briefly unavailable. ⚠️ *AI GENERATED — review* | R3c · M1 |
+| Deliver that pushed signal reliably — a confirmed deliberate decline must not silently lose its signal if Genie is briefly unavailable. | R3c · M1 |
 | Let the CSP complete his decline when the points can't be shown (none, or API not in time), never blocking him — recording the decline but sending no signal to Genie. | R4 · G2 |
 | Run the identical assist and capture at both a decline and an install-failure report. | R5 |
-
----
-
-## AI-generated content for review
-
-| Location | What was generated | Basis |
-|---|---|---|
-| §1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5 | M2 (first-CSP Location is Far decline rate) and M3 (overall Location is Far decline share) baselines = "to fill"; targets "down and trending"; both downstream (Genie) | The routing payoff depends on Genie acting on the signal, so it's tracked at the loop level, not owned here; the baseline decline rates still need pulling. |
-| §1 M4 target / §6 MQ-6 | "Grows as Genie acts…"; prevented-mis-route count is downstream (Genie) | PM-requested metric — tasks not created for a CSP near a rejected point that would have been before. Genie owns the suppression and its counterfactual (would-have-surfaced-before); confirm how it's measured with Genie. |
-| §2 R4b / §4 skipped state / AC-STR-1 | Tell the CSP the check was "skipped", not "failed" | The never-block stance is a PM decision on failure UX; the exact wording is inferred. |
-| §4 experience-intent line | The one-line experience-intent phrasing | Inferred wording; the screens and Figma links (design + prototype) are now provided. |
-| §7 AC-STR-1, AC-RACE-1, AC-DUP-1 | Marked ACs | Each rests on an inferred behaviour above (skip-on-no-points, late-response handling, idempotency) not yet confirmed by the PM. |
-| §9 delivery capability | "Deliver the pushed signal reliably" | M1 targets 100% of deliberate declines emitting a valid signal, which requires the push not be silently lost; whether to guarantee delivery (and how) is for PM + Eng to confirm. |
 
 ---
 

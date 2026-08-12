@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Decline due to Location is Far — CSP Assist &amp; Capture and Send Signal to Genie — PRD (Draft)</title>
+<title>Decline due to Location is Far — CSP Assist &amp; Capture and Send Signal to Genie — PRD</title>
 <style>
   :root{color-scheme:light;--plane:#f5f5f2;--surface:#fffffe;--raise:#fbfbf9;--ink:#16171c;--ink2:#44454c;--muted:#83848b;--line:#e6e5df;--hair:rgba(20,21,26,.09);--accent:#4f46e5;--accent-ink:#4338ca;--accent-wash:rgba(79,70,229,.07);--amber:#b25e00;--amber-bg:rgba(224,140,20,.13);--code:#ecebe6}
   @media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){color-scheme:dark;--plane:#0e0f11;--surface:#191a1d;--raise:#1f2023;--ink:#f1f2f3;--ink2:#c2c6cc;--muted:#8b9096;--line:#2b2c2f;--hair:rgba(255,255,255,.10);--accent:#8b83f0;--accent-ink:#a79ff5;--accent-wash:rgba(120,110,235,.14);--amber:#f0b055;--amber-bg:rgba(224,140,20,.16);--code:#26272a}}
@@ -43,7 +43,7 @@
 <div class="topbar">
   <div class="wrap row">
     <span class="eyebrow">CSP Decline Intelligence · Part 2</span>
-    <span class="badge">Draft · v0.1</span>
+    <span class="badge">Signed off · v1.0</span>
     <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">◑</button>
   </div>
 </div>
@@ -61,11 +61,11 @@
 <tbody><tr>
 <td><strong>Owner</strong> — Ashish Raj (PM)</td>
 <td><strong>Reviewer</strong> — Saurabh Goyal</td>
-<td><strong>Status</strong> — Draft</td>
-<td><strong>Sign-off</strong> — Pending</td>
+<td><strong>Status</strong> — Signed off</td>
+<td><strong>Sign-off</strong> — Signed off · 12 Aug 2026</td>
 </tr>
 <tr>
-<td><strong>Version</strong> — v0.1 · 11 Aug 2026</td>
+<td><strong>Version</strong> — v1.0 · 12 Aug 2026</td>
 <td><strong>Consulted — Genie (serviceability)</strong> — Maanas</td>
 <td></td>
 <td></td>
@@ -139,14 +139,14 @@
 <tr>
 <td>M2</td>
 <td><strong>First-CSP Location is Far decline rate ↓ (loop-level, Genie-driven)</strong> — the CSP a booking is <strong>first routed to</strong> declines it for the Location is Far reason less often, because Genie stops routing far bookings to CSPs who have said they can&#39;t serve there — so bookings need fewer re-routes to be accepted</td>
-<td>current first-CSP Location is Far decline rate — to fill ⚠️ <em>AI GENERATED — review</em></td>
+<td>measured at launch — current first-CSP Location is Far decline rate (loop-level)</td>
 <td>Down and trending</td>
 <td>MQ-4</td>
 </tr>
 <tr>
 <td>M3</td>
 <td><strong>Location is Far decline share ↓ (loop-level, Genie-driven)</strong> — the share of bookings declined for the Location is Far reason falls, as far / irrelevant bookings stop being routed to a CSP who can&#39;t serve them</td>
-<td>current Location is Far decline share — to fill ⚠️ <em>AI GENERATED — review</em></td>
+<td>measured at launch — current Location is Far decline share (loop-level)</td>
 <td>Down and trending</td>
 <td>MQ-5</td>
 </tr>
@@ -154,7 +154,7 @@
 <td>M4</td>
 <td><strong>Prevented mis-routes (loop-level, Genie-driven)</strong> — future bookings near a rejected point for which this CSP is <strong>no longer surfaced</strong> in Genie&#39;s candidate list, so <strong>no task is created</strong> for him — jobs that, before his signal, would have been routed to him</td>
 <td>n/a — new capability</td>
-<td>Grows as Genie acts on the signals — each one is an irrelevant task the CSP is spared and a routing attempt Wiom saves ⚠️ <em>AI GENERATED — review</em></td>
+<td>Grows as Genie acts on the signals — each one is an irrelevant task the CSP is spared and a routing attempt Wiom saves</td>
 <td>MQ-6</td>
 </tr>
 </tbody></table>
@@ -193,7 +193,7 @@
 <tr>
 <td>R4</td>
 <td>As a CSP, I can always complete my decline even when the nearby points can&#39;t be shown.</td>
-<td><strong>(a)</strong> If Genie returns no nearby points, or its API does not respond in time, let the Location is Far decline proceed without the intercept — record it, but <strong>send no signal to Genie</strong>: the CSP was shown nothing, so he made no informed decision and there is nothing to report. <strong>(b)</strong> Tell the CSP the check was skipped, not that it failed. ⚠️ <em>AI GENERATED — review</em></td>
+<td><strong>(a)</strong> If Genie returns no nearby points, or its API does not respond in time, let the Location is Far decline proceed without the intercept — record it, but <strong>send no signal to Genie</strong>: the CSP was shown nothing, so he made no informed decision and there is nothing to report. <strong>(b)</strong> Tell the CSP the check was skipped, not that it failed.</td>
 <td>Block, trap, or spin the CSP because the intercept could not load (G2); or send Genie a signal from a decline where no points were shown.</td>
 </tr>
 <tr>
@@ -256,14 +256,15 @@
 </tbody></table>
 <hr>
 <h2>4. Screen Requirements</h2>
-<p><strong>Experience intent:</strong> the app is on the CSP&#39;s side — <em>&quot;before you turn this down, here&#39;s what you already run nearby&quot;</em> — and honest about what happens next (<em>&quot;we&#39;ll stop sending you bookings here so your time isn&#39;t wasted&quot;</em>). Never nagged, never blocked. ⚠️ <em>AI GENERATED — review</em></p>
+<p><strong>Experience intent:</strong> the app is on the CSP&#39;s side — <em>&quot;before you turn this down, here&#39;s what you already run nearby&quot;</em> — and honest about what happens next (<em>&quot;we&#39;ll stop sending you bookings here so your time isn&#39;t wasted&quot;</em>). Never nagged, never blocked.</p>
 <p><strong>Master design file:</strong> Figma · &quot;PA — Dev → January 2026 Onwards&quot; (CSP app) — <a href="https://figma.com/design/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?t=sU3hI2FvbPQONDUO-0">design &amp; assets</a> · <a href="https://www.figma.com/proto/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?node-id=10827-2818&viewport=382%2C-6863%2C0.44&t=mwwU62RAMEkIo0IQ-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=10827%3A2818&show-proto-sidebar=1&page-id=9780%3A1268">interactive prototype</a>. Frames <strong>S2</strong> (reason sheet, Part 1), <strong>S1</strong> (Location is Far intercept), <strong>S4</strong> (confirmation).</p>
 <blockquote>
 <p>⚑ <strong>Exact copy comes from Figma.</strong> All strings (titles, the distance phrasing, the notice, button labels — English and Hindi) are the Figma file&#39;s; the copy quoted here is indicative.</p>
 </blockquote>
 <h3>Location is Far intercept (S1) — CSP app — decline &amp; install-failure</h3>
 <p><strong>States:</strong> loading (fetching points, brief wait) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
-<strong>Freshness:</strong> the points and distances reflect Genie&#39;s API response for this booking at the moment of submit.</p>
+<strong>Freshness:</strong> the points and distances reflect Genie&#39;s API response for this booking at the moment of submit.
+<strong>Modal:</strong> the intercept is a <strong>blocking modal</strong> — the CSP must pick one of the two actions; there is no dismiss-without-choosing (R1b).</p>
 <table>
 <thead>
 <tr>
@@ -320,7 +321,7 @@
 <td>dismisses to the feed</td>
 </tr>
 </tbody></table>
-<p><strong>Skipped (no intercept).</strong> When Genie returns no nearby points or its API is not in time, the intercept (S1) is not shown; the decline is finalised (T3) with <strong>no signal sent to Genie</strong> (no informed decision), and the CSP sees a neutral &quot;we couldn&#39;t check nearby connections&quot; note — never an error that blocks (R4b, G2). ⚠️ <em>AI GENERATED — review</em></p>
+<p><strong>Skipped (no intercept).</strong> When Genie returns no nearby points or its API is not in time, the intercept (S1) is not shown; the decline is finalised (T3) with <strong>no signal sent to Genie</strong> (no informed decision), and the CSP sees a neutral &quot;we couldn&#39;t check nearby connections&quot; note — never an error that blocks (R4b, G2).</p>
 <hr>
 <h2>5. Configurability</h2>
 <p><strong>None.</strong> This feature has no PM-configurable parameters. The app waits briefly for Genie&#39;s points and, if they do not arrive, proceeds without the intercept — never blocking the CSP (R4, G2). That wait is a fixed implementation timeout owned by Eng, not a business config.</p>
@@ -352,17 +353,17 @@
 <tr>
 <td>MQ-4</td>
 <td>Over time, does the first-routed CSP decline for the Location is Far reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie)</td>
-<td>M2 ⚠️ <em>AI GENERATED — review</em></td>
+<td>M2</td>
 </tr>
 <tr>
 <td>MQ-5</td>
 <td>Over time, does the Location is Far decline share fall as far / irrelevant bookings stop being routed to a CSP who can&#39;t serve them? (loop outcome, driven by Genie)</td>
-<td>M3 ⚠️ <em>AI GENERATED — review</em></td>
+<td>M3</td>
 </tr>
 <tr>
 <td>MQ-6</td>
 <td>Per CSP × rejected point, how many future bookings did Genie exclude him from the candidate list for — because of his Location is Far signal — that it would have surfaced him for before, i.e. tasks never created for him? (loop outcome, driven by Genie)</td>
-<td>M4 ⚠️ <em>AI GENERATED — review</em></td>
+<td>M4</td>
 </tr>
 <tr>
 <td>MQ-7</td>
@@ -431,7 +432,7 @@
 <td>AC-STR-1</td>
 <td><strong>Given</strong> a CSP selects the Location is Far reason and Genie returns no nearby points, <strong>When</strong> he confirms the decline, <strong>Then</strong> the Location is Far decline is recorded, <strong>no signal is sent to Genie</strong> (no points were shown, so no informed decision), and he is told the nearby check was skipped.</td>
 <td>R4a · R4b · T3 · G2</td>
-<td>Settled ⚠️ <em>AI GENERATED — review</em></td>
+<td>Settled</td>
 </tr>
 </tbody></table>
 <h3>WF — Workflows (both capture points)</h3>
@@ -522,7 +523,7 @@
 <td>AC-RACE-1</td>
 <td><strong>Given</strong> the app already proceeded without the intercept and the decline was recorded straight (T3), <strong>When</strong> Genie&#39;s points arrive afterwards, <strong>Then</strong> they are ignored — the recorded decline stands and no intercept is retro-shown.</td>
 <td>§3a precedence</td>
-<td>Settled ⚠️ <em>AI GENERATED — review</em></td>
+<td>Settled</td>
 </tr>
 </tbody></table>
 <h3>DUP — Duplicate trigger</h3>
@@ -539,7 +540,7 @@
 <td>AC-DUP-1</td>
 <td><strong>Given</strong> a Location is Far decline already recorded and emitted, <strong>When</strong> the CSP double-taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> exactly one decline and one signal exist for that event.</td>
 <td>T1</td>
-<td>Settled ⚠️ <em>AI GENERATED — review</em></td>
+<td>Settled</td>
 </tr>
 </tbody></table>
 <hr>
@@ -615,7 +616,7 @@
 <td>R3c · G4 · G5</td>
 </tr>
 <tr>
-<td>Deliver that pushed signal reliably — a confirmed deliberate decline must not silently lose its signal if Genie is briefly unavailable. ⚠️ <em>AI GENERATED — review</em></td>
+<td>Deliver that pushed signal reliably — a confirmed deliberate decline must not silently lose its signal if Genie is briefly unavailable.</td>
 <td>R3c · M1</td>
 </tr>
 <tr>
@@ -625,47 +626,6 @@
 <tr>
 <td>Run the identical assist and capture at both a decline and an install-failure report.</td>
 <td>R5</td>
-</tr>
-</tbody></table>
-<hr>
-<h2>AI-generated content for review</h2>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>What was generated</th>
-<th>Basis</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>§1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5</td>
-<td>M2 (first-CSP Location is Far decline rate) and M3 (overall Location is Far decline share) baselines = &quot;to fill&quot;; targets &quot;down and trending&quot;; both downstream (Genie)</td>
-<td>The routing payoff depends on Genie acting on the signal, so it&#39;s tracked at the loop level, not owned here; the baseline decline rates still need pulling.</td>
-</tr>
-<tr>
-<td>§1 M4 target / §6 MQ-6</td>
-<td>&quot;Grows as Genie acts…&quot;; prevented-mis-route count is downstream (Genie)</td>
-<td>PM-requested metric — tasks not created for a CSP near a rejected point that would have been before. Genie owns the suppression and its counterfactual (would-have-surfaced-before); confirm how it&#39;s measured with Genie.</td>
-</tr>
-<tr>
-<td>§2 R4b / §4 skipped state / AC-STR-1</td>
-<td>Tell the CSP the check was &quot;skipped&quot;, not &quot;failed&quot;</td>
-<td>The never-block stance is a PM decision on failure UX; the exact wording is inferred.</td>
-</tr>
-<tr>
-<td>§4 experience-intent line</td>
-<td>The one-line experience-intent phrasing</td>
-<td>Inferred wording; the screens and Figma links (design + prototype) are now provided.</td>
-</tr>
-<tr>
-<td>§7 AC-STR-1, AC-RACE-1, AC-DUP-1</td>
-<td>Marked ACs</td>
-<td>Each rests on an inferred behaviour above (skip-on-no-points, late-response handling, idempotency) not yet confirmed by the PM.</td>
-</tr>
-<tr>
-<td>§9 delivery capability</td>
-<td>&quot;Deliver the pushed signal reliably&quot;</td>
-<td>M1 targets 100% of deliberate declines emitting a valid signal, which requires the push not be silently lost; whether to guarantee delivery (and how) is for PM + Eng to confirm.</td>
 </tr>
 </tbody></table>
 <hr>
