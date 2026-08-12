@@ -175,7 +175,7 @@
 <tbody><tr>
 <td>R1</td>
 <td>As a CSP about to decline a booking because it&#39;s too far from me, I first see the connections I already run nearby, so I don&#39;t refuse a job I can serve.</td>
-<td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the coverage reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>blocking confirm</strong> (the &quot;coverage intercept&quot;) — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised (within C-01). <strong>(b)</strong> Require an explicit choice — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
+<td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the coverage reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>blocking confirm</strong> (the &quot;coverage intercept&quot;) — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised. <strong>(b)</strong> Require an explicit choice — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
 <td>Finalise the coverage decline without the intercept when nearby points exist and can be shown.</td>
 </tr>
 <tr>
@@ -193,7 +193,7 @@
 <tr>
 <td>R4</td>
 <td>As a CSP, I can always complete my decline even when the nearby points can&#39;t be shown.</td>
-<td><strong>(a)</strong> If Genie returns no nearby points, or its API does not respond within C-01, let the coverage decline proceed without the intercept — record it, but <strong>send no signal to Genie</strong>: the CSP was shown nothing, so he made no informed decision and there is nothing to report. <strong>(b)</strong> Tell the CSP the check was skipped, not that it failed. ⚠️ <em>AI GENERATED — review</em></td>
+<td><strong>(a)</strong> If Genie returns no nearby points, or its API does not respond in time, let the coverage decline proceed without the intercept — record it, but <strong>send no signal to Genie</strong>: the CSP was shown nothing, so he made no informed decision and there is nothing to report. <strong>(b)</strong> Tell the CSP the check was skipped, not that it failed. ⚠️ <em>AI GENERATED — review</em></td>
 <td>Block, trap, or spin the CSP because the intercept could not load (G2); or send Genie a signal from a decline where no points were shown.</td>
 </tr>
 <tr>
@@ -208,14 +208,14 @@
 <h3>3a. System flow chart</h3>
 <pre class="mermaid">flowchart TD
     A["CSP submits a decline / install-failure — booking too far (coverage reason)"] --> B["Fetch nearby active/splitter points from Genie API"]
-    B --> C{"Points shown within C-01?"}
+    B --> C{"Points shown in time?"}
     C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline; no signal to Genie (no informed decision)"]
     C -- "Yes" --> D["Coverage intercept — count, distances, list, notice"]
     D --> E{"CSP's choice"}
     E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him"]
     E -- "I won't be able to connect" --> T1["T1 — remove booking; record deliberate decline + rejected points; emit to Genie; show confirmation"]
 </pre>
-<p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the C-01 fallback already fired (T3), the fallback stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
+<p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the app has already proceeded without the intercept (T3), that stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
 <h3>3b. State transition table — canon</h3>
 <p>Lifecycle of a <strong>coverage-decline assist</strong> (created when a CSP selects the coverage reason at a decline or an install-failure). The reason picker itself (Part 1) and Genie&#39;s consumption of the signal (unit, threshold, consequence) are out of scope; this spec governs only the CSP-side assist, capture and emit.</p>
 <table>
@@ -249,7 +249,7 @@
 <td>T3</td>
 <td>—</td>
 <td>CSP submits the coverage reason</td>
-<td>No points shown within C-01 (none nearby, or API slow/down)</td>
+<td>No points shown in time (none nearby, or API slow/down)</td>
 <td>Recorded, <strong>not</strong> sent</td>
 <td>Coverage decline / install-failure finalised and recorded; <strong>no signal sent to Genie</strong> — the CSP was shown no points, so there is no informed decision to report; CSP told the check was skipped (R4, G2).</td>
 </tr>
@@ -262,7 +262,7 @@
 <p>⚑ <strong>Exact copy comes from Figma.</strong> All strings (titles, the distance phrasing, the notice, button labels — English and Hindi) are the Figma file&#39;s; the copy quoted here is indicative.</p>
 </blockquote>
 <h3>Coverage intercept (S1) — CSP app — decline &amp; install-failure</h3>
-<p><strong>States:</strong> loading (fetching points, within C-01) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
+<p><strong>States:</strong> loading (fetching points, brief wait) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
 <strong>Freshness:</strong> the points and distances reflect Genie&#39;s API response for this booking at the moment of submit.</p>
 <table>
 <thead>
@@ -320,27 +320,10 @@
 <td>dismisses to the feed</td>
 </tr>
 </tbody></table>
-<p><strong>Skipped (no intercept).</strong> When Genie returns no nearby points or its API is not in time (C-01), the intercept (S1) is not shown; the decline is finalised (T3) with <strong>no signal sent to Genie</strong> (no informed decision), and the CSP sees a neutral &quot;we couldn&#39;t check nearby connections&quot; note — never an error that blocks (R4b, G2). ⚠️ <em>AI GENERATED — review</em></p>
+<p><strong>Skipped (no intercept).</strong> When Genie returns no nearby points or its API is not in time, the intercept (S1) is not shown; the decline is finalised (T3) with <strong>no signal sent to Genie</strong> (no informed decision), and the CSP sees a neutral &quot;we couldn&#39;t check nearby connections&quot; note — never an error that blocks (R4b, G2). ⚠️ <em>AI GENERATED — review</em></p>
 <hr>
 <h2>5. Configurability</h2>
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>Parameter</th>
-<th>Default</th>
-<th>Range</th>
-<th>Who changes it</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>C-01</td>
-<td>Assist wait window — how long the app waits for Genie&#39;s points before proceeding without the assist (the CSP is never blocked, R4/G2)</td>
-<td>3 seconds ⚠️ <em>AI GENERATED — review</em></td>
-<td>1–8 s ⚠️ <em>AI GENERATED — review</em></td>
-<td>Product + Eng</td>
-</tr>
-</tbody></table>
+<p><strong>None.</strong> This feature has no PM-configurable parameters. The app waits briefly for Genie&#39;s points and, if they do not arrive, proceeds without the intercept — never blocking the CSP (R4, G2). That wait is a fixed implementation timeout owned by Eng, not a business config.</p>
 <hr>
 <h2>6. Measurement</h2>
 <table>
@@ -481,7 +464,7 @@
 <td>Settled</td>
 </tr>
 </tbody></table>
-<h3>FAIL — Failure window (C-01)</h3>
+<h3>FAIL — Failure window (Genie API timeout)</h3>
 <table>
 <thead>
 <tr>
@@ -493,8 +476,8 @@
 </thead>
 <tbody><tr>
 <td>AC-FAIL-1</td>
-<td><strong>Given</strong> a CSP selects the coverage reason, <strong>When</strong> Genie&#39;s API has not returned points within C-01 (3 s), <strong>Then</strong> the app lets him complete the decline without the intercept — never blocked or left spinning — and <strong>no signal is sent to Genie</strong>.</td>
-<td>R4a · G2 · C-01 · T3</td>
+<td><strong>Given</strong> a CSP selects the coverage reason, <strong>When</strong> Genie&#39;s API has not returned points in time, <strong>Then</strong> the app lets him complete the decline without the intercept — never blocked or left spinning — and <strong>no signal is sent to Genie</strong>.</td>
+<td>R4a · G2 · T3</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -515,29 +498,6 @@
 <td>Settled</td>
 </tr>
 </tbody></table>
-<h3>BV — Boundary values (C-01)</h3>
-<table>
-<thead>
-<tr>
-<th>AC</th>
-<th>Given / When / Then</th>
-<th>Verifies</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>AC-BV-1</td>
-<td><strong>Given</strong> Genie&#39;s points arrive at 2.9 s (just inside C-01 of 3 s), <strong>When</strong> the CSP is on the coverage reason, <strong>Then</strong> the intercept is shown.</td>
-<td>C-01 · R1a</td>
-<td>Settled</td>
-</tr>
-<tr>
-<td>AC-BV-2</td>
-<td><strong>Given</strong> Genie&#39;s points arrive at 3.1 s (just outside C-01), <strong>When</strong> the CSP is on the coverage reason, <strong>Then</strong> the intercept is skipped, the decline proceeds (T3), and no signal is sent to Genie — the late points are ignored.</td>
-<td>C-01 · R4a · T3</td>
-<td>Settled</td>
-</tr>
-</tbody></table>
 <h3>RACE — Races</h3>
 <table>
 <thead>
@@ -550,7 +510,7 @@
 </thead>
 <tbody><tr>
 <td>AC-RACE-1</td>
-<td><strong>Given</strong> the C-01 fallback already fired and the decline was recorded straight (T3), <strong>When</strong> Genie&#39;s points arrive afterwards, <strong>Then</strong> they are ignored — the recorded decline stands and no assist is retro-shown.</td>
+<td><strong>Given</strong> the app already proceeded without the intercept and the decline was recorded straight (T3), <strong>When</strong> Genie&#39;s points arrive afterwards, <strong>Then</strong> they are ignored — the recorded decline stands and no intercept is retro-shown.</td>
 <td>§3a precedence</td>
 <td>Settled ⚠️ <em>AI GENERATED — review</em></td>
 </tr>
@@ -613,9 +573,9 @@
 <td>—</td>
 </tr>
 <tr>
-<td>Assist wait window</td>
-<td><strong>Canonical definition:</strong> how long the app waits for Genie&#39;s points before proceeding without the assist so the CSP is never blocked (C-01).</td>
-<td>Product + Eng</td>
+<td>Wait for Genie</td>
+<td><strong>Canonical definition:</strong> the brief wait for Genie&#39;s points before the app proceeds without the intercept so the CSP is never blocked (R4, G2); a fixed implementation timeout, not a business config.</td>
+<td>Eng</td>
 </tr>
 </tbody></table>
 <hr>
@@ -629,8 +589,8 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>At coverage-decline time, fetch the CSP&#39;s nearby active/splitter points from Genie&#39;s API, within the assist wait window.</td>
-<td>R1a · C-01</td>
+<td>At coverage-decline time, fetch the CSP&#39;s nearby active/splitter points from Genie&#39;s API, within a brief wait.</td>
+<td>R1a</td>
 </tr>
 <tr>
 <td>Show a blocking confirm with those points and two choices — reconsider, or confirm not serviceable.</td>
@@ -650,7 +610,7 @@
 </tr>
 <tr>
 <td>Let the CSP complete his decline when the points can&#39;t be shown (none, or API not in time), never blocking him — recording the decline but sending no signal to Genie.</td>
-<td>R4 · G2 · C-01</td>
+<td>R4 · G2</td>
 </tr>
 <tr>
 <td>Run the identical assist and capture at both a decline and an install-failure report.</td>
@@ -691,11 +651,6 @@
 <td>§4</td>
 <td>Figma link to confirm; experience-intent line</td>
 <td>Screens are designed (S1 intercept / S2 reason sheet / S4 confirmation, provided by the PM); the exact Figma URL still needs pasting in, and the experience-intent line is inferred.</td>
-</tr>
-<tr>
-<td>§5 C-01</td>
-<td>Assist wait window = 3 s, range 1–8 s</td>
-<td>A never-block fallback window is required; the exact value is inferred.</td>
 </tr>
 <tr>
 <td>§7 AC-STR-1, AC-RACE-1, AC-DUP-1</td>
