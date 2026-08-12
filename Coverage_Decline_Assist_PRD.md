@@ -1,4 +1,4 @@
-# Decline due to Location is Far — CSP Assist &amp; Capture
+# Decline due to Location is Far — CSP Assist &amp; Capture and Send Signal to Genie
 
 | | | | |
 |---|---|---|---|
