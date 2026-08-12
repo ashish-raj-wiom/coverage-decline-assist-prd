@@ -101,8 +101,8 @@
 </tr>
 <tr>
 <td>G3</td>
-<td><strong>Back-off leaves no trace</strong></td>
-<td>If the CSP reconsiders, nothing is recorded and nothing is emitted, and the booking stays with him.</td>
+<td><strong>Back-off = no decline, no signal</strong></td>
+<td>If the CSP reconsiders, no decline is recorded and no signal is sent to Genie, and the booking stays with him. The back-off event itself is captured for measurement (MQ-1) — only the decline is absent, because no decline happened.</td>
 <td>R2 · AC-BACK-1 · MQ-1</td>
 </tr>
 <tr>
@@ -181,8 +181,8 @@
 <tr>
 <td>R2</td>
 <td>As a CSP who reconsiders, tapping &quot;OK, I&#39;ll connect&quot; returns me to the job with nothing held against me.</td>
-<td><strong>(a)</strong> On reconsider, submit no decline and keep the booking with the CSP. <strong>(b)</strong> Emit nothing to Genie.</td>
-<td>Record a decline or send any signal to Genie on a reconsider.</td>
+<td><strong>(a)</strong> On reconsider, submit no decline and keep the booking with the CSP. <strong>(b)</strong> Send no signal to Genie. <strong>(c)</strong> Record the back-off event — the intercept was shown and he reconsidered — for measurement (MQ-1).</td>
+<td>Record a decline, or send any signal to Genie, on a reconsider.</td>
 </tr>
 <tr>
 <td>R3</td>
@@ -212,7 +212,7 @@
     C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline; no signal to Genie (no informed decision)"]
     C -- "Yes" --> D["Coverage intercept — count, distances, list, notice"]
     D --> E{"CSP's choice"}
-    E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him"]
+    E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him; back-off logged"]
     E -- "I won't be able to connect" --> T1["T1 — remove booking; record deliberate decline + rejected points; emit to Genie; show confirmation"]
 </pre>
 <p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the app has already proceeded without the intercept (T3), that stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
@@ -242,8 +242,8 @@
 <td>Intercept shown</td>
 <td>CSP taps &quot;OK, I&#39;ll connect&quot;</td>
 <td>—</td>
-<td>(no record)</td>
-<td>No decline recorded; nothing emitted; booking stays with the CSP (R2, G3).</td>
+<td>Reconsidered</td>
+<td>No decline recorded; no signal sent to Genie; booking stays with the CSP; the back-off is logged for measurement (R2, G3, MQ-1).</td>
 </tr>
 <tr>
 <td>T3</td>
@@ -402,8 +402,8 @@
 </thead>
 <tbody><tr>
 <td>AC-BACK-1</td>
-<td><strong>Given</strong> a CSP shown his nearby connections on a coverage decline, <strong>When</strong> he taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> no decline is recorded, nothing is emitted to Genie, and the booking stays with him.</td>
-<td>R1b · R2a · R2b · T2 · G3</td>
+<td><strong>Given</strong> a CSP shown his nearby connections on a coverage decline, <strong>When</strong> he taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> no decline is recorded and no signal is sent to Genie, the booking stays with him, and the back-off event (intercept shown → reconsidered) is captured for measurement.</td>
+<td>R1b · R2a · R2b · R2c · T2 · G3 · MQ-1</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -569,7 +569,7 @@
 </tr>
 <tr>
 <td>Back-off</td>
-<td>The CSP tapping &quot;OK, I&#39;ll connect&quot; at the intercept — he reconsiders and keeps the job; nothing is recorded or emitted (T2, G3).</td>
+<td>The CSP tapping &quot;OK, I&#39;ll connect&quot; at the intercept — he reconsiders and keeps the job; no decline is recorded and no signal is sent to Genie, but the back-off event is logged for measurement (T2, G3, MQ-1).</td>
 <td>—</td>
 </tr>
 <tr>
