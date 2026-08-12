@@ -136,6 +136,8 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 | MQ-4 | Over time, does the first-routed CSP decline for the Location is Far reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie) | M2 ⚠️ *AI GENERATED — review* |
 | MQ-5 | Over time, does the Location is Far decline share fall as far / irrelevant bookings stop being routed to a CSP who can't serve them? (loop outcome, driven by Genie) | M3 ⚠️ *AI GENERATED — review* |
 | MQ-6 | Per CSP × rejected point, how many future bookings did Genie exclude him from the candidate list for — because of his Location is Far signal — that it would have surfaced him for before, i.e. tasks never created for him? (loop outcome, driven by Genie) | M4 ⚠️ *AI GENERATED — review* |
+| MQ-7 | Per task, how many bookings timed out with **no action from the CSP** — the **P41 / P74** timeouts — so passive timeouts are told apart from deliberate Location is Far declines? | diagnostic (M2 / M3 interpretation) |
+| MQ-8 | Is every screen shown and every CTA tapped across the flow — the Location is Far intercept (S1), the confirmation (S4), and the two actions ("I won't be able to connect" / "OK, I'll connect") — captured as an event (**preferably in CleverTap**), so the full funnel (intercept shown → confirm / reconsider / skipped) can be analysed? | MQ-1 · MQ-3 · G3 · R2c |
 
 ---
 
