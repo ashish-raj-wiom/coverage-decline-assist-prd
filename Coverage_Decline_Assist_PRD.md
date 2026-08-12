@@ -101,7 +101,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 | Element | Source / Routes to | Logic |
 |---|---|---|
 | Field — title | Genie API (count + closest distance) | e.g. "You already have N connections near this place — only D away"; N and D from Genie |
-| Field — connections list | Genie API (his own active connections / splitter near the booking) | each row = name · address · distance, **or** a single "your splitter" row; scrollable when more than 2 (up to 5) |
+| Field — connections list | Genie API (his own active connections / splitter near the booking) | each row = name · address · distance, **or** a single "your splitter" row; the list scrolls when it is longer than the sheet fits |
 | Field — notice | — | plain transparency line: the booking is too far to serve → we'll stop sending him bookings here so his time isn't wasted |
 | Action — "I won't be able to connect" | T1 via §3a | confirms the decline; removes the booking; records the deliberate decline + the shown points as rejected; emits to Genie (R3) → S4 |
 | Action — "OK, I'll connect" | T2 via §3a | reconsiders; no decline; booking stays with him (R2) |
@@ -133,7 +133,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 | ID | The system must be able to answer… | Feeds |
 |---|---|---|
 | MQ-1 | Of coverage declines where the intercept was shown, what share backed off ("OK, I'll connect")? — signal-quality diagnostic, not a target | diagnostic · G3 |
-| MQ-2 | For every confirmed coverage decline, was a signal emitted to Genie carrying only the points that were shown? | M1 · G1 · G4 invariant |
+| MQ-2 | For every emitted signal, was it for the coverage reason only (never another reason) and carrying only the points that were shown? | M1 · G1 · G4 · G5 invariant |
 | MQ-3 | Of coverage-reason declines, how many saw the intercept vs proceeded without it (no points / API not in time)? | R4 · G2 |
 | MQ-4 | Over time, does the first-routed CSP decline for the far-distance reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie) | M2 ⚠️ *AI GENERATED — review* |
 | MQ-5 | Over time, does the coverage-decline share fall as far / irrelevant bookings stop being routed to a CSP who can't serve them? (loop outcome, driven by Genie) | M3 ⚠️ *AI GENERATED — review* |
@@ -147,14 +147,14 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-CONF-1 | **Given** a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is **pushed** to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points **in the order shown** as rejected. | R3a · R3b · R3c · T1 · G4 | Settled |
+| AC-CONF-1 | **Given** a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is **pushed** to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points **in the order shown** as rejected. | R1b · R3a · R3b · R3c · T1 · G4 | Settled |
 | AC-CONF-2 | **Given** the same confirm, **When** the signal is emitted, **Then** it names only the points that were shown — no point the CSP was not shown ever appears in it. | R3c · G1 · T1 | Settled |
 
 ### BACK — Reconsidered (T2)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-BACK-1 | **Given** a CSP shown his nearby connections on a coverage decline, **When** he taps "OK, I'll connect", **Then** no decline is recorded, nothing is emitted to Genie, and the booking stays with him. | R2a · R2b · T2 · G3 | Settled |
+| AC-BACK-1 | **Given** a CSP shown his nearby connections on a coverage decline, **When** he taps "OK, I'll connect", **Then** no decline is recorded, nothing is emitted to Genie, and the booking stays with him. | R1b · R2a · R2b · T2 · G3 | Settled |
 
 ### STR — Proceeded without the assist (T3)
 
@@ -166,7 +166,8 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-WF-1 | **Given** the same Genie points, **When** one CSP hits the coverage reason on a **decline** and another on an **install-failure report**, **Then** both see the identical blocking-confirm assist and, on "I won't be able to connect", both emit a signal to Genie with the rejected points — the only differences recorded are the capture point and the outcome copy (booking removed vs failure recorded). | R5 · T1 · G4 | Settled |
+| AC-WF-1 | **Given** the same Genie points, **When** one CSP hits the coverage reason on a **decline** and another on an **install-failure report**, **Then** both see the identical intercept and, on "I won't be able to connect", both emit a signal to Genie with the rejected points — the only differences recorded are the capture point and the outcome copy (booking removed vs failure recorded). | R5 · T1 · G4 | Settled |
+| AC-WF-2 | **Given** a CSP reports an **install-failure** (post-acceptance) with the coverage reason and is shown his nearby connections, **When** he taps "I won't be able to connect", **Then** the failure is recorded and the task is handed back for re-routing (the booking is **not** shown as "removed"), and the signal pushed to Genie carries the capture point = install-failure. | R3a · R5 · T1 | Settled |
 
 ### GRD — Guardrails
 
@@ -190,8 +191,8 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-BV-1 | **Given** Genie's points arrive at 2.9 s (just inside C-01 of 3 s), **When** the CSP is on the coverage reason, **Then** the blocking-confirm assist is shown. | C-01 · R1a | Settled |
-| AC-BV-2 | **Given** Genie's points arrive at 3.1 s (just outside C-01), **When** the CSP is on the coverage reason, **Then** the assist is skipped, the decline proceeds (T3), and no signal is sent to Genie — the late points are ignored. | C-01 · R4a · T3 | Settled |
+| AC-BV-1 | **Given** Genie's points arrive at 2.9 s (just inside C-01 of 3 s), **When** the CSP is on the coverage reason, **Then** the intercept is shown. | C-01 · R1a | Settled |
+| AC-BV-2 | **Given** Genie's points arrive at 3.1 s (just outside C-01), **When** the CSP is on the coverage reason, **Then** the intercept is skipped, the decline proceeds (T3), and no signal is sent to Genie — the late points are ignored. | C-01 · R4a · T3 | Settled |
 
 ### RACE — Races
 
@@ -231,6 +232,7 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | Show a blocking confirm with those points and two choices — reconsider, or confirm not serviceable. | R1 · T1 · T2 |
 | Capture the deliberate decline and the exact points shown as rejected — never a point not shown. | R3 · G1 |
 | Push an explicit signal to Genie — connection + customer id, CSP, decline vs install-failure, the coverage reason, and the ordered points shown as rejected — for the coverage reason only, taking no routing or de-listing action itself, and not relying on Genie to read it from a database. | R3c · G4 · G5 |
+| Deliver that pushed signal reliably — a confirmed deliberate decline must not silently lose its signal if Genie is briefly unavailable. ⚠️ *AI GENERATED — review* | R3c · M1 |
 | Let the CSP complete his decline when the points can't be shown (none, or API not in time), never blocking him — recording the decline but sending no signal to Genie. | R4 · G2 · C-01 |
 | Run the identical assist and capture at both a decline and an install-failure report. | R5 |
 
@@ -247,3 +249,12 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | §4 | Figma link to confirm; experience-intent line | Screens are designed (S1 intercept / S2 reason sheet / S4 confirmation, provided by the PM); the exact Figma URL still needs pasting in, and the experience-intent line is inferred. |
 | §5 C-01 | Assist wait window = 3 s, range 1–8 s | A never-block fallback window is required; the exact value is inferred. |
 | §7 AC-STR-1, AC-RACE-1, AC-DUP-1 | Marked ACs | Each rests on an inferred behaviour above (skip-on-no-points, late-response handling, idempotency) not yet confirmed by the PM. |
+| §9 delivery capability | "Deliver the pushed signal reliably" | M1 targets 100% of deliberate declines emitting a valid signal, which requires the push not be silently lost; whether to guarantee delivery (and how) is for PM + Eng to confirm. |
+
+---
+
+## Overrides
+
+| Rule overridden | What was done instead | Rationale | Approved by |
+|---|---|---|---|
+| What/why-only — no mechanism (J3 envelope purity) | The PRD states the signal is **pushed** to Genie as an explicit event, not written to a table for Genie to poll (§1 Boundary, R3c, §9) | PM's call — an explicit push is a cleaner, self-describing contract than Genie polling a shared table, and avoids coupling on DB internals | Ashish Raj (PM) |

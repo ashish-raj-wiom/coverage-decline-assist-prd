@@ -280,7 +280,7 @@
 <tr>
 <td>Field — connections list</td>
 <td>Genie API (his own active connections / splitter near the booking)</td>
-<td>each row = name · address · distance, <strong>or</strong> a single &quot;your splitter&quot; row; scrollable when more than 2 (up to 5)</td>
+<td>each row = name · address · distance, <strong>or</strong> a single &quot;your splitter&quot; row; the list scrolls when it is longer than the sheet fits</td>
 </tr>
 <tr>
 <td>Field — notice</td>
@@ -358,8 +358,8 @@
 </tr>
 <tr>
 <td>MQ-2</td>
-<td>For every confirmed coverage decline, was a signal emitted to Genie carrying only the points that were shown?</td>
-<td>M1 · G1 · G4 invariant</td>
+<td>For every emitted signal, was it for the coverage reason only (never another reason) and carrying only the points that were shown?</td>
+<td>M1 · G1 · G4 · G5 invariant</td>
 </tr>
 <tr>
 <td>MQ-3</td>
@@ -397,7 +397,7 @@
 <tbody><tr>
 <td>AC-CONF-1</td>
 <td><strong>Given</strong> a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie&#39;s range, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is <strong>pushed</strong> to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points <strong>in the order shown</strong> as rejected.</td>
-<td>R3a · R3b · R3c · T1 · G4</td>
+<td>R1b · R3a · R3b · R3c · T1 · G4</td>
 <td>Settled</td>
 </tr>
 <tr>
@@ -420,7 +420,7 @@
 <tbody><tr>
 <td>AC-BACK-1</td>
 <td><strong>Given</strong> a CSP shown his nearby connections on a coverage decline, <strong>When</strong> he taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> no decline is recorded, nothing is emitted to Genie, and the booking stays with him.</td>
-<td>R2a · R2b · T2 · G3</td>
+<td>R1b · R2a · R2b · T2 · G3</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -453,8 +453,14 @@
 </thead>
 <tbody><tr>
 <td>AC-WF-1</td>
-<td><strong>Given</strong> the same Genie points, <strong>When</strong> one CSP hits the coverage reason on a <strong>decline</strong> and another on an <strong>install-failure report</strong>, <strong>Then</strong> both see the identical blocking-confirm assist and, on &quot;I won&#39;t be able to connect&quot;, both emit a signal to Genie with the rejected points — the only differences recorded are the capture point and the outcome copy (booking removed vs failure recorded).</td>
+<td><strong>Given</strong> the same Genie points, <strong>When</strong> one CSP hits the coverage reason on a <strong>decline</strong> and another on an <strong>install-failure report</strong>, <strong>Then</strong> both see the identical intercept and, on &quot;I won&#39;t be able to connect&quot;, both emit a signal to Genie with the rejected points — the only differences recorded are the capture point and the outcome copy (booking removed vs failure recorded).</td>
 <td>R5 · T1 · G4</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-WF-2</td>
+<td><strong>Given</strong> a CSP reports an <strong>install-failure</strong> (post-acceptance) with the coverage reason and is shown his nearby connections, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the failure is recorded and the task is handed back for re-routing (the booking is <strong>not</strong> shown as &quot;removed&quot;), and the signal pushed to Genie carries the capture point = install-failure.</td>
+<td>R3a · R5 · T1</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -521,13 +527,13 @@
 </thead>
 <tbody><tr>
 <td>AC-BV-1</td>
-<td><strong>Given</strong> Genie&#39;s points arrive at 2.9 s (just inside C-01 of 3 s), <strong>When</strong> the CSP is on the coverage reason, <strong>Then</strong> the blocking-confirm assist is shown.</td>
+<td><strong>Given</strong> Genie&#39;s points arrive at 2.9 s (just inside C-01 of 3 s), <strong>When</strong> the CSP is on the coverage reason, <strong>Then</strong> the intercept is shown.</td>
 <td>C-01 · R1a</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-BV-2</td>
-<td><strong>Given</strong> Genie&#39;s points arrive at 3.1 s (just outside C-01), <strong>When</strong> the CSP is on the coverage reason, <strong>Then</strong> the assist is skipped, the decline proceeds (T3), and no signal is sent to Genie — the late points are ignored.</td>
+<td><strong>Given</strong> Genie&#39;s points arrive at 3.1 s (just outside C-01), <strong>When</strong> the CSP is on the coverage reason, <strong>Then</strong> the intercept is skipped, the decline proceeds (T3), and no signal is sent to Genie — the late points are ignored.</td>
 <td>C-01 · R4a · T3</td>
 <td>Settled</td>
 </tr>
@@ -639,6 +645,10 @@
 <td>R3c · G4 · G5</td>
 </tr>
 <tr>
+<td>Deliver that pushed signal reliably — a confirmed deliberate decline must not silently lose its signal if Genie is briefly unavailable. ⚠️ <em>AI GENERATED — review</em></td>
+<td>R3c · M1</td>
+</tr>
+<tr>
 <td>Let the CSP complete his decline when the points can&#39;t be shown (none, or API not in time), never blocking him — recording the decline but sending no signal to Genie.</td>
 <td>R4 · G2 · C-01</td>
 </tr>
@@ -691,6 +701,29 @@
 <td>§7 AC-STR-1, AC-RACE-1, AC-DUP-1</td>
 <td>Marked ACs</td>
 <td>Each rests on an inferred behaviour above (skip-on-no-points, late-response handling, idempotency) not yet confirmed by the PM.</td>
+</tr>
+<tr>
+<td>§9 delivery capability</td>
+<td>&quot;Deliver the pushed signal reliably&quot;</td>
+<td>M1 targets 100% of deliberate declines emitting a valid signal, which requires the push not be silently lost; whether to guarantee delivery (and how) is for PM + Eng to confirm.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Overrides</h2>
+<table>
+<thead>
+<tr>
+<th>Rule overridden</th>
+<th>What was done instead</th>
+<th>Rationale</th>
+<th>Approved by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What/why-only — no mechanism (J3 envelope purity)</td>
+<td>The PRD states the signal is <strong>pushed</strong> to Genie as an explicit event, not written to a table for Genie to poll (§1 Boundary, R3c, §9)</td>
+<td>PM&#39;s call — an explicit push is a cleaner, self-describing contract than Genie polling a shared table, and avoids coupling on DB internals</td>
+<td>Ashish Raj (PM)</td>
 </tr>
 </tbody></table>
 
