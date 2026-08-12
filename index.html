@@ -136,8 +136,15 @@
 <td>Down and trending</td>
 <td>MQ-4</td>
 </tr>
+<tr>
+<td>M3</td>
+<td><strong>Prevented mis-routes (loop-level, Genie-driven)</strong> — future bookings near a rejected point for which this CSP is <strong>no longer surfaced</strong> in Genie&#39;s candidate list, so <strong>no task is created</strong> for him — jobs that, before his signal, would have been routed to him</td>
+<td>n/a — new capability</td>
+<td>Grows as Genie acts on the signals — each one is an irrelevant task the CSP is spared and a routing attempt Wiom saves ⚠️ <em>AI GENERATED — review</em></td>
+<td>MQ-5</td>
+</tr>
 </tbody></table>
-<p><strong>This feature&#39;s own success is M1 — the loop is clean and complete.</strong> M2 is the loop&#39;s downstream payoff and is driven by <strong>Genie acting on the signal</strong>, not by this feature alone; it is tracked at the loop level, not owned here.</p>
+<p><strong>This feature&#39;s own success is M1 — the loop is clean and complete.</strong> M2 and M3 are the loop&#39;s downstream payoff and are driven by <strong>Genie acting on the signal</strong>, not by this feature alone; they are tracked at the loop level, not owned here. Their integrity rests on the signal being accurate — the intercept and G1 keep it so.</p>
 <p><strong>Diagnostic (not a target).</strong> The back-off / reconsideration rate is watched (MQ-1) purely as a <strong>signal-quality check</strong> — it tells us the intercept is filtering out reflex declines so the loop isn&#39;t polluted. It is <strong>not</strong> a success metric: the aim is an accurate signal, not fewer declines or more reconsiders.</p>
 <p><strong>Invariant (not a metric):</strong> G1 flagged-point-not-shown = 0, zero tolerance. Monitored via MQ-2, not trended.</p>
 <hr>
@@ -349,6 +356,11 @@
 <td>MQ-4</td>
 <td>Over time, does the median booking-to-CSP distance fall and the coverage-decline share drop as bookings route to the most relevant CSP first? (loop outcome, driven by Genie)</td>
 <td>M2 ⚠️ <em>AI GENERATED — review</em></td>
+</tr>
+<tr>
+<td>MQ-5</td>
+<td>Per CSP × rejected point, how many future bookings did Genie exclude him from the candidate list for — because of his coverage signal — that it would have surfaced him for before, i.e. tasks never created for him? (loop outcome, driven by Genie)</td>
+<td>M3 ⚠️ <em>AI GENERATED — review</em></td>
 </tr>
 </tbody></table>
 <hr>
@@ -630,6 +642,11 @@
 <td>§1 M2 baseline &amp; target / §6 MQ-4</td>
 <td>M2 baseline = &quot;to fill&quot;; target &quot;down and trending&quot;; the distance-↓ / coverage-decline-↓ routing outcome is downstream (Genie)</td>
 <td>The routing payoff depends on Genie acting on the signal, so it&#39;s tracked at the loop level, not owned here; the baseline distance / coverage-decline numbers still need pulling.</td>
+</tr>
+<tr>
+<td>§1 M3 target / §6 MQ-5</td>
+<td>&quot;Grows as Genie acts…&quot;; prevented-mis-route count is downstream (Genie)</td>
+<td>PM-requested metric — tasks not created for a CSP near a rejected point that would have been before. Genie owns the suppression and its counterfactual (would-have-surfaced-before); confirm how it&#39;s measured with Genie.</td>
 </tr>
 <tr>
 <td>§2 R4b / §4 skipped state / AC-STR-1</td>
