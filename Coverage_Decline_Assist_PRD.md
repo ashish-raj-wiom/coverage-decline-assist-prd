@@ -9,7 +9,9 @@
 
 ## 1. Objective &amp; Definition of Success
 
-**Objective.** When a CSP is about to decline a booking because **the booking is too far from him** (the coverage reason — the location is not serviceable / too far), first show him the connections he already runs nearby — so he doesn't refuse a job he can serve by reflex — and when he still says no, capture that deliberate "won't serve here" with the exact points he rejected, so the system can stop sending him bookings there.
+**Objective.** Turn a CSP's "this booking is too far from me" decline into a clean, point-level **feedback signal that routing (Genie / DAS) can act on** — so Wiom sends each booking to the **most relevant CSP first**, and the CSP stops being handed far, irrelevant jobs. When a CSP declines a booking as too far, the app shows him the connections he already runs nearby; this exists to make his answer **deliberate and accurate** — not to talk him out of declining — so a reflex tap on a job he could actually serve doesn't pollute the loop. When he confirms, we capture the exact points he is rejecting and emit them to Genie. **The win is mutual:** the CSP is no longer surfaced for bookings he genuinely can't serve, and Wiom routes to a nearer CSP instead. This feature owns the **capture and emit**; Genie and DAS act on the signal.
+
+**What success is — and isn't.** Success is a **trustworthy feedback loop into routing**, not a lower decline rate and not making CSPs reconsider. A confirmed "too far" decline is a *good* outcome — it is correct information the routing system needs. The intercept's only job is to keep that information accurate.
 
 **Boundary.** This spec governs the **CSP-side experience** for the coverage reason — the CSP says **the booking is too far from him** (the location is not serviceable / too far) — at both capture points — a **decline** (before acceptance) and an **install-failure report** (any time after acceptance). It covers: fetching the CSP's nearby active/splitter points from **Genie's API** and showing them in a **blocking confirm**; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and **emitting that signal to Genie**. Out of scope: **Genie's nearby-points API and its definition of "nearby"** (a separate Genie PRD); the flag **unit**, the **threshold**, and the **consequence** — de-listing the point / the candidate-list distance calc — all owned by **Genie**; **DAS** routing; **ops-calling verification** (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points **shown** to the CSP can appear in the emitted signal (G1).
 
@@ -26,10 +28,12 @@
 
 | ID | Metric | Baseline | Target | Source |
 |---|---|---|---|---|
-| M1 | **Reconsideration rate** — of coverage declines where the assist was shown, the share where the CSP backed off ("OK, I'll connect") instead of confirming | n/a — new capability | Positive and trending — this is the false-decline catch ⚠️ *AI GENERATED — review* | MQ-1 |
-| M2 | Confirmed coverage declines that emit a valid signal to Genie carrying the rejected points | n/a — new capability | 100% | MQ-2 |
+| M1 | **Feedback-loop integrity** — of deliberate coverage declines, the share that emit a valid point-level signal to Genie (CSP + capture point + only the points shown as rejected) | n/a — new capability | 100% | MQ-2 |
+| M2 | **Routing outcome (loop-level, Genie-driven)** — most-relevant-CSP-first: median booking-to-CSP distance ↓, and the coverage-decline share ↓ as far / irrelevant bookings stop being routed to a CSP who can't serve them | current distance / coverage-decline baseline — to fill ⚠️ *AI GENERATED — review* | Down and trending | MQ-4 |
 
-**Loop-outcome note (downstream of this feature).** The initiative's ultimate goals — **coverage-decline share ↓**, **median booking-to-CSP distance ↓**, **customer install-wait ↓** — are driven by **Genie acting on this signal**, not by this feature alone. They are tracked at the loop level, not owned here. ⚠️ *AI GENERATED — review*
+**This feature's own success is M1 — the loop is clean and complete.** M2 is the loop's downstream payoff and is driven by **Genie acting on the signal**, not by this feature alone; it is tracked at the loop level, not owned here.
+
+**Diagnostic (not a target).** The back-off / reconsideration rate is watched (MQ-1) purely as a **signal-quality check** — it tells us the intercept is filtering out reflex declines so the loop isn't polluted. It is **not** a success metric: the aim is an accurate signal, not fewer declines or more reconsiders.
 
 **Invariant (not a metric):** G1 flagged-point-not-shown = 0, zero tolerance. Monitored via MQ-2, not trended.
 
@@ -123,10 +127,10 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | ID | The system must be able to answer… | Feeds |
 |---|---|---|
-| MQ-1 | Of coverage declines where the assist was shown, what share backed off ("OK, I'll connect")? | M1 · G3 |
-| MQ-2 | For every confirmed coverage decline, was a signal emitted to Genie carrying only the points that were shown? | M2 · G1 · G4 invariant |
-| MQ-3 | Of coverage-reason declines, how many saw the assist vs proceeded without it (no points / API not in time)? | R4 · G2 |
-| MQ-4 | Over time, the coverage-decline share and the median booking-to-CSP distance (loop outcome, driven by Genie). | Loop-outcome note ⚠️ *AI GENERATED — review* |
+| MQ-1 | Of coverage declines where the intercept was shown, what share backed off ("OK, I'll connect")? — signal-quality diagnostic, not a target | diagnostic · G3 |
+| MQ-2 | For every confirmed coverage decline, was a signal emitted to Genie carrying only the points that were shown? | M1 · G1 · G4 invariant |
+| MQ-3 | Of coverage-reason declines, how many saw the intercept vs proceeded without it (no points / API not in time)? | R4 · G2 |
+| MQ-4 | Over time, does the median booking-to-CSP distance fall and the coverage-decline share drop as bookings route to the most relevant CSP first? (loop outcome, driven by Genie) | M2 ⚠️ *AI GENERATED — review* |
 
 ---
 
@@ -229,7 +233,7 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | Location | What was generated | Basis |
 |---|---|---|
 | Header | Reviewer + Consulted (Genie) = TBD | No names supplied; the feature depends on Genie's API, so a Genie consult is expected. |
-| §1 M1 target / §1 loop-outcome note / §6 MQ-4 | "Positive and trending"; the coverage-declines-↓ / distance-↓ / wait-↓ outcomes are downstream (Genie) | The direct metric is the reconsideration catch; the loop outcomes depend on Genie acting, so they're noted as downstream, not owned here. Confirm framing. |
+| §1 M2 baseline &amp; target / §6 MQ-4 | M2 baseline = "to fill"; target "down and trending"; the distance-↓ / coverage-decline-↓ routing outcome is downstream (Genie) | The routing payoff depends on Genie acting on the signal, so it's tracked at the loop level, not owned here; the baseline distance / coverage-decline numbers still need pulling. |
 | §2 R4b / §4 skipped state / AC-STR-1 | Tell the CSP the check was "skipped", not "failed" | The never-block stance is a PM decision on failure UX; the exact wording is inferred. |
 | §4 | Figma link to confirm; experience-intent line | Screens are designed (S1 intercept / S2 reason sheet / S4 confirmation, provided by the PM); the exact Figma URL still needs pasting in, and the experience-intent line is inferred. |
 | §5 C-01 | Assist wait window = 3 s, range 1–8 s | A never-block fallback window is required; the exact value is inferred. |
