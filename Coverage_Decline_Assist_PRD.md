@@ -2,8 +2,8 @@
 
 | | | | |
 |---|---|---|---|
-| **Owner** — Ashish Raj (PM) | **Reviewer** — TBD ⚠️ *AI GENERATED — review* | **Status** — Draft | **Sign-off** — Pending |
-| **Version** — v0.1 · 11 Aug 2026 | **Consulted — Genie (serviceability)** — TBD ⚠️ *AI GENERATED — review* | | |
+| **Owner** — Ashish Raj (PM) | **Reviewer** — Saurabh Goyal | **Status** — Draft | **Sign-off** — Pending |
+| **Version** — v0.1 · 11 Aug 2026 | **Consulted — Genie (serviceability)** — Maanas | | |
 
 ---
 
@@ -25,7 +25,7 @@
 | G2 | **Never block the decline** | If the nearby points can't be shown — none exist, or Genie's API is slow or down — the CSP can still complete his decline; he is never trapped. | R4 · AC-FAIL-1 · MQ-3 |
 | G3 | **Back-off = no decline, no signal** | If the CSP reconsiders, no decline is recorded and no signal is sent to Genie, and the booking stays with him. The back-off event itself is captured for measurement (MQ-1) — only the decline is absent, because no decline happened. | R2 · AC-BACK-1 · MQ-1 |
 | G4 | **Capture-only** | This feature captures and emits a signal; Genie decides the unit, threshold and consequence, and DAS routes. It commands nothing. | R3 · AC-GRD-1 · MQ-2 |
-| G5 | **Emitted only for this reason** | A signal is pushed to Genie **only** for the coverage reason (booking too far) — never for any other decline / install-failure reason. | R3 · AC-REG-1 |
+| G5 | **Emitted only for this reason** | A signal is pushed to Genie **only** for the coverage reason (booking too far) — never for any other decline / install-failure reason. | R3 · AC-REG-1 · MQ-2 |
 
 ### Success metrics
 
@@ -145,7 +145,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-CONF-1 | **Given** a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is **pushed** to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points **in the order shown** as rejected. | R1b · R3a · R3b · R3c · T1 · G4 | Settled |
+| AC-CONF-1 | **Given** a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is **pushed** to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points **in the order shown** as rejected. | R1a · R1b · R3a · R3b · R3c · T1 · G4 | Settled |
 | AC-CONF-2 | **Given** the same confirm, **When** the signal is emitted, **Then** it names only the points that were shown — no point the CSP was not shown ever appears in it. | R3c · G1 · T1 | Settled |
 
 ### BACK — Reconsidered (T2)
@@ -233,7 +233,6 @@ What the platform must be able to do for this feature to exist. Whether these ar
 
 | Location | What was generated | Basis |
 |---|---|---|
-| Header | Reviewer + Consulted (Genie) = TBD | No names supplied; the feature depends on Genie's API, so a Genie consult is expected. |
 | §1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5 | M2 (first-CSP coverage-decline rate) and M3 (overall coverage-decline share) baselines = "to fill"; targets "down and trending"; both downstream (Genie) | The routing payoff depends on Genie acting on the signal, so it's tracked at the loop level, not owned here; the baseline decline rates still need pulling. |
 | §1 M4 target / §6 MQ-6 | "Grows as Genie acts…"; prevented-mis-route count is downstream (Genie) | PM-requested metric — tasks not created for a CSP near a rejected point that would have been before. Genie owns the suppression and its counterfactual (would-have-surfaced-before); confirm how it's measured with Genie. |
 | §2 R4b / §4 skipped state / AC-STR-1 | Tell the CSP the check was "skipped", not "failed" | The never-block stance is a PM decision on failure UX; the exact wording is inferred. |

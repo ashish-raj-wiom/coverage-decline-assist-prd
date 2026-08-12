@@ -60,13 +60,13 @@
 </thead>
 <tbody><tr>
 <td><strong>Owner</strong> — Ashish Raj (PM)</td>
-<td><strong>Reviewer</strong> — TBD ⚠️ <em>AI GENERATED — review</em></td>
+<td><strong>Reviewer</strong> — Saurabh Goyal</td>
 <td><strong>Status</strong> — Draft</td>
 <td><strong>Sign-off</strong> — Pending</td>
 </tr>
 <tr>
 <td><strong>Version</strong> — v0.1 · 11 Aug 2026</td>
-<td><strong>Consulted — Genie (serviceability)</strong> — TBD ⚠️ <em>AI GENERATED — review</em></td>
+<td><strong>Consulted — Genie (serviceability)</strong> — Maanas</td>
 <td></td>
 <td></td>
 </tr>
@@ -115,7 +115,7 @@
 <td>G5</td>
 <td><strong>Emitted only for this reason</strong></td>
 <td>A signal is pushed to Genie <strong>only</strong> for the coverage reason (booking too far) — never for any other decline / install-failure reason.</td>
-<td>R3 · AC-REG-1</td>
+<td>R3 · AC-REG-1 · MQ-2</td>
 </tr>
 </tbody></table>
 <h3>Success metrics</h3>
@@ -380,7 +380,7 @@
 <tbody><tr>
 <td>AC-CONF-1</td>
 <td><strong>Given</strong> a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie&#39;s range, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is <strong>pushed</strong> to Genie carrying the connection + customer id, the CSP, that it was a decline for the coverage reason, and those 3 points <strong>in the order shown</strong> as rejected.</td>
-<td>R1b · R3a · R3b · R3c · T1 · G4</td>
+<td>R1a · R1b · R3a · R3b · R3c · T1 · G4</td>
 <td>Settled</td>
 </tr>
 <tr>
@@ -628,11 +628,6 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>Header</td>
-<td>Reviewer + Consulted (Genie) = TBD</td>
-<td>No names supplied; the feature depends on Genie&#39;s API, so a Genie consult is expected.</td>
-</tr>
-<tr>
 <td>§1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5</td>
 <td>M2 (first-CSP coverage-decline rate) and M3 (overall coverage-decline share) baselines = &quot;to fill&quot;; targets &quot;down and trending&quot;; both downstream (Genie)</td>
 <td>The routing payoff depends on Genie acting on the signal, so it&#39;s tracked at the loop level, not owned here; the baseline decline rates still need pulling.</td>
