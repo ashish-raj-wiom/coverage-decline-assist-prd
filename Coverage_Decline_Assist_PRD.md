@@ -1,4 +1,4 @@
-# Coverage Decline Loop — CSP Assist &amp; Capture — the "cable can't reach" reason
+# Coverage Decline Loop — CSP Assist &amp; Capture — the "booking too far" reason
 
 | | | | |
 |---|---|---|---|
@@ -9,9 +9,9 @@
 
 ## 1. Objective &amp; Definition of Success
 
-**Objective.** When a CSP is about to decline a booking as **"The cable can't reach this place"**, first show him the connections he already runs nearby — so he doesn't refuse a job he can serve by reflex — and when he still says no, capture that deliberate "won't serve here" with the exact points he rejected, so the system can stop sending him bookings there.
+**Objective.** When a CSP is about to decline a booking because **the booking is too far from him** (the coverage reason — the location is not serviceable / too far), first show him the connections he already runs nearby — so he doesn't refuse a job he can serve by reflex — and when he still says no, capture that deliberate "won't serve here" with the exact points he rejected, so the system can stop sending him bookings there.
 
-**Boundary.** This spec governs the **CSP-side experience** for the coverage reason ("The cable can't reach this place") at both capture points — a **decline** (before acceptance) and an **install-failure report** (any time after acceptance). It covers: fetching the CSP's nearby active/splitter points from **Genie's API** and showing them in a **blocking confirm**; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and **emitting that signal to Genie**. Out of scope: **Genie's nearby-points API and its definition of "nearby"** (a separate Genie PRD); the flag **unit**, the **threshold**, and the **consequence** — de-listing the point / the candidate-list distance calc — all owned by **Genie**; **DAS** routing; **ops-calling verification** (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points **shown** to the CSP can appear in the emitted signal (G1).
+**Boundary.** This spec governs the **CSP-side experience** for the coverage reason — the CSP says **the booking is too far from him** (the location is not serviceable / too far) — at both capture points — a **decline** (before acceptance) and an **install-failure report** (any time after acceptance). It covers: fetching the CSP's nearby active/splitter points from **Genie's API** and showing them in a **blocking confirm**; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and **emitting that signal to Genie**. Out of scope: **Genie's nearby-points API and its definition of "nearby"** (a separate Genie PRD); the flag **unit**, the **threshold**, and the **consequence** — de-listing the point / the candidate-list distance calc — all owned by **Genie**; **DAS** routing; **ops-calling verification** (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points **shown** to the CSP can appear in the emitted signal (G1).
 
 ### Guardrails — promises that hold on every path
 
@@ -39,7 +39,7 @@
 
 | ID | Story | MUST | MUST NOT |
 |---|---|---|---|
-| R1 | As a CSP about to decline a booking as "the cable can't reach this place", I first see the connections I already run nearby, so I don't refuse a job I can serve. | **(a)** When he **submits** a decline / install-failure with the coverage reason, fetch his nearby active/splitter points from **Genie's API** and show a **blocking confirm** (the "coverage intercept") — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised (within C-01). **(b)** Require an explicit choice — **"I won't be able to connect"** (confirm) or **"OK, I'll connect"** (reconsider). | Finalise the coverage decline without the intercept when nearby points exist and can be shown. |
+| R1 | As a CSP about to decline a booking because it's too far from me, I first see the connections I already run nearby, so I don't refuse a job I can serve. | **(a)** When he **submits** a decline / install-failure with the coverage reason, fetch his nearby active/splitter points from **Genie's API** and show a **blocking confirm** (the "coverage intercept") — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised (within C-01). **(b)** Require an explicit choice — **"I won't be able to connect"** (confirm) or **"OK, I'll connect"** (reconsider). | Finalise the coverage decline without the intercept when nearby points exist and can be shown. |
 | R2 | As a CSP who reconsiders, tapping "OK, I'll connect" returns me to the job with nothing held against me. | **(a)** On reconsider, submit no decline and keep the booking with the CSP. **(b)** Emit nothing to Genie. | Record a decline, a flag, or any signal on a reconsider. |
 | R3 | As Wiom, when the CSP confirms "I won't be able to connect", I remove the booking, capture the deliberate decline and the points he rejected, and send them to Genie. | **(a)** Record the coverage decline / install-failure as **deliberate** — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a **decline** (pre-acceptance) removes the booking; an **install-failure** (post-acceptance) records the failure and hands the task back for re-routing. **(b)** Capture the exact points he was shown (from Genie's API) as the points he is rejecting. **(c)** Emit the signal to Genie carrying the CSP, the capture point, and the rejected points. | Flag any point that was not shown to him (G1). |
 | R4 | As a CSP, I can always complete my decline even when the nearby points can't be shown. | **(a)** If Genie returns no nearby points, or its API does not respond within C-01, let the coverage decline proceed without the assist — record it and emit it without a rejected-points list. **(b)** Tell the CSP the check was skipped, not that it failed. ⚠️ *AI GENERATED — review* | Block, trap, or spin the CSP because the assist could not load (G2). |
@@ -53,7 +53,7 @@
 
 ```mermaid
 flowchart TD
-    A["CSP submits a decline / install-failure with 'The cable can't reach this place'"] --> B["Fetch nearby active/splitter points from Genie API"]
+    A["CSP submits a decline / install-failure — booking too far (coverage reason)"] --> B["Fetch nearby active/splitter points from Genie API"]
     B --> C{"Points shown within C-01?"}
     C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline, emit without rejected points"]
     C -- "Yes" --> D["Coverage intercept — count, distances, list, notice"]
@@ -93,7 +93,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 |---|---|---|
 | Field — title | Genie API (count + closest distance) | e.g. "You already have N connections near this place — only D away"; N and D from Genie |
 | Field — connections list | Genie API (his own active connections / splitter near the booking) | each row = name · address · distance, **or** a single "your splitter" row; scrollable when more than 2 (up to 5) |
-| Field — notice | — | plain transparency line: the cable can't reach → we'll stop sending him bookings here so his time isn't wasted |
+| Field — notice | — | plain transparency line: the booking is too far to serve → we'll stop sending him bookings here so his time isn't wasted |
 | Action — "I won't be able to connect" | T1 via §3a | confirms the decline; removes the booking; records the deliberate decline + the shown points as rejected; emits to Genie (R3) → S4 |
 | Action — "OK, I'll connect" | T2 via §3a | reconsiders; no decline; booking stays with him (R2) |
 
@@ -104,7 +104,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | Element | Source / Routes to | Logic |
 |---|---|---|
-| Field — outcome + reason | reason-capture (R3a) | confirms the outcome and shows his reason ("the cable can't reach this place"); copy is capture-point-specific — "booking removed" on a decline, failure recorded on an install-failure |
+| Field — outcome + reason | reason-capture (R3a) | confirms the outcome and shows his reason (the booking was too far to serve); copy is capture-point-specific — "booking removed" on a decline, failure recorded on an install-failure |
 | Action — OK | — | dismisses to the feed |
 
 **Skipped (no intercept).** When Genie returns no nearby points or its API is not in time (C-01), the intercept (S1) is not shown; the decline is finalised (T3) and the CSP sees a neutral "we couldn't check nearby connections" note — never an error that blocks (R4b, G2). ⚠️ *AI GENERATED — review*
@@ -136,7 +136,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-CONF-1 | **Given** a CSP declining a booking who selected "The cable can't reach this place" and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is emitted to Genie carrying the CSP, the capture point (decline), and those 3 points as rejected. | R3a · R3b · R3c · T1 · G4 | Settled |
+| AC-CONF-1 | **Given** a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is emitted to Genie carrying the CSP, the capture point (decline), and those 3 points as rejected. | R3a · R3b · R3c · T1 · G4 | Settled |
 | AC-CONF-2 | **Given** the same confirm, **When** the signal is emitted, **Then** it names only the points that were shown — no point the CSP was not shown ever appears in it. | R3c · G1 · T1 | Settled |
 
 ### BACK — Reconsidered (T2)
@@ -200,7 +200,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | Term | Meaning | Owner (domain) |
 |---|---|---|
-| Coverage decline | **Canonical definition:** a decline (or install-failure) where the CSP gives the reason "The cable can't reach this place" — he says the location is not serviceable / too far. This spec's trigger. | — |
+| Coverage decline | **Canonical definition:** a decline (or install-failure) where the CSP gives the coverage reason — he says the booking is too far from him / the location is not serviceable. This spec's trigger. (The exact display copy lives in Figma, Part 1.) | — |
 | Nearby active/splitter points | The CSP's own active connections and splitter points near the booking, **served by Genie's API**; shown in the assist so he can see what he already reaches. This feature reads them; it does not define "nearby". | Genie (serviceability) |
 | Deliberate decline | A coverage decline the CSP confirmed **after** seeing his nearby connections — worth far more than a reflex tap; the only kind that emits rejected points (T1). | — |
 | Rejected points | The nearby points the CSP was shown and still declined over — the payload this feature emits to Genie. Never contains a point he was not shown (G1). | — |

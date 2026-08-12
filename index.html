@@ -48,7 +48,7 @@
   </div>
 </div>
 <main><div class="wrap"><div id="doc">
-<h1>Coverage Decline Loop — CSP Assist &amp; Capture — the &quot;cable can&#39;t reach&quot; reason</h1>
+<h1>Coverage Decline Loop — CSP Assist &amp; Capture — the &quot;booking too far&quot; reason</h1>
 <table>
 <thead>
 <tr>
@@ -73,8 +73,8 @@
 </tbody></table>
 <hr>
 <h2>1. Objective &amp; Definition of Success</h2>
-<p><strong>Objective.</strong> When a CSP is about to decline a booking as <strong>&quot;The cable can&#39;t reach this place&quot;</strong>, first show him the connections he already runs nearby — so he doesn&#39;t refuse a job he can serve by reflex — and when he still says no, capture that deliberate &quot;won&#39;t serve here&quot; with the exact points he rejected, so the system can stop sending him bookings there.</p>
-<p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the coverage reason (&quot;The cable can&#39;t reach this place&quot;) at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>blocking confirm</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>emitting that signal to Genie</strong>. Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the flag <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the emitted signal (G1).</p>
+<p><strong>Objective.</strong> When a CSP is about to decline a booking because <strong>the booking is too far from him</strong> (the coverage reason — the location is not serviceable / too far), first show him the connections he already runs nearby — so he doesn&#39;t refuse a job he can serve by reflex — and when he still says no, capture that deliberate &quot;won&#39;t serve here&quot; with the exact points he rejected, so the system can stop sending him bookings there.</p>
+<p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the coverage reason — the CSP says <strong>the booking is too far from him</strong> (the location is not serviceable / too far) — at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>blocking confirm</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>emitting that signal to Genie</strong>. Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the flag <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the emitted signal (G1).</p>
 <h3>Guardrails — promises that hold on every path</h3>
 <table>
 <thead>
@@ -151,7 +151,7 @@
 </thead>
 <tbody><tr>
 <td>R1</td>
-<td>As a CSP about to decline a booking as &quot;the cable can&#39;t reach this place&quot;, I first see the connections I already run nearby, so I don&#39;t refuse a job I can serve.</td>
+<td>As a CSP about to decline a booking because it&#39;s too far from me, I first see the connections I already run nearby, so I don&#39;t refuse a job I can serve.</td>
 <td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the coverage reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>blocking confirm</strong> (the &quot;coverage intercept&quot;) — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised (within C-01). <strong>(b)</strong> Require an explicit choice — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
 <td>Finalise the coverage decline without the intercept when nearby points exist and can be shown.</td>
 </tr>
@@ -184,7 +184,7 @@
 <h2>3. System Behaviour</h2>
 <h3>3a. System flow chart</h3>
 <pre class="mermaid">flowchart TD
-    A["CSP submits a decline / install-failure with 'The cable can't reach this place'"] --> B["Fetch nearby active/splitter points from Genie API"]
+    A["CSP submits a decline / install-failure — booking too far (coverage reason)"] --> B["Fetch nearby active/splitter points from Genie API"]
     B --> C{"Points shown within C-01?"}
     C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline, emit without rejected points"]
     C -- "Yes" --> D["Coverage intercept — count, distances, list, notice"]
@@ -262,7 +262,7 @@
 <tr>
 <td>Field — notice</td>
 <td>—</td>
-<td>plain transparency line: the cable can&#39;t reach → we&#39;ll stop sending him bookings here so his time isn&#39;t wasted</td>
+<td>plain transparency line: the booking is too far to serve → we&#39;ll stop sending him bookings here so his time isn&#39;t wasted</td>
 </tr>
 <tr>
 <td>Action — &quot;I won&#39;t be able to connect&quot;</td>
@@ -289,7 +289,7 @@
 <tbody><tr>
 <td>Field — outcome + reason</td>
 <td>reason-capture (R3a)</td>
-<td>confirms the outcome and shows his reason (&quot;the cable can&#39;t reach this place&quot;); copy is capture-point-specific — &quot;booking removed&quot; on a decline, failure recorded on an install-failure</td>
+<td>confirms the outcome and shows his reason (the booking was too far to serve); copy is capture-point-specific — &quot;booking removed&quot; on a decline, failure recorded on an install-failure</td>
 </tr>
 <tr>
 <td>Action — OK</td>
@@ -363,7 +363,7 @@
 </thead>
 <tbody><tr>
 <td>AC-CONF-1</td>
-<td><strong>Given</strong> a CSP declining a booking who selected &quot;The cable can&#39;t reach this place&quot; and is shown 3 of his own active connections within Genie&#39;s range, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is emitted to Genie carrying the CSP, the capture point (decline), and those 3 points as rejected.</td>
+<td><strong>Given</strong> a CSP declining a booking with the coverage reason (booking too far) and is shown 3 of his own active connections within Genie&#39;s range, <strong>When</strong> he taps &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the coverage decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is emitted to Genie carrying the CSP, the capture point (decline), and those 3 points as rejected.</td>
 <td>R3a · R3b · R3c · T1 · G4</td>
 <td>Settled</td>
 </tr>
@@ -545,7 +545,7 @@
 </thead>
 <tbody><tr>
 <td>Coverage decline</td>
-<td><strong>Canonical definition:</strong> a decline (or install-failure) where the CSP gives the reason &quot;The cable can&#39;t reach this place&quot; — he says the location is not serviceable / too far. This spec&#39;s trigger.</td>
+<td><strong>Canonical definition:</strong> a decline (or install-failure) where the CSP gives the coverage reason — he says the booking is too far from him / the location is not serviceable. This spec&#39;s trigger. (The exact display copy lives in Figma, Part 1.)</td>
 <td>—</td>
 </tr>
 <tr>
