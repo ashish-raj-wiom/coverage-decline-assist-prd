@@ -89,7 +89,7 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 **Experience intent:** the app is on the CSP's side — *"before you turn this down, here's what you already run nearby"* — and honest about what happens next (*"we'll stop sending you bookings here so your time isn't wasted"*). Never nagged, never blocked. ⚠️ *AI GENERATED — review*
 
-**Master design file:** designed — frames **S2** (reason sheet, Part 1), **S1** (Location is Far intercept), **S4** (confirmation). Figma: CSP app · "PA — Dev → January 2026 Onwards" — link to confirm. ⚠️ *AI GENERATED — review*
+**Master design file:** Figma · "PA — Dev → January 2026 Onwards" (CSP app) — [design & assets](https://figma.com/design/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev-->-January-2026-Onwards?t=sU3hI2FvbPQONDUO-0) · [interactive prototype](https://www.figma.com/proto/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?node-id=10827-2818&viewport=382%2C-6863%2C0.44&t=mwwU62RAMEkIo0IQ-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=10827%3A2818&show-proto-sidebar=1&page-id=9780%3A1268). Frames **S2** (reason sheet, Part 1), **S1** (Location is Far intercept), **S4** (confirmation).
 
 > ⚑ **Exact copy comes from Figma.** All strings (titles, the distance phrasing, the notice, button labels — English and Hindi) are the Figma file's; the copy quoted here is indicative.
 
@@ -236,7 +236,7 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | §1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5 | M2 (first-CSP Location is Far decline rate) and M3 (overall Location is Far decline share) baselines = "to fill"; targets "down and trending"; both downstream (Genie) | The routing payoff depends on Genie acting on the signal, so it's tracked at the loop level, not owned here; the baseline decline rates still need pulling. |
 | §1 M4 target / §6 MQ-6 | "Grows as Genie acts…"; prevented-mis-route count is downstream (Genie) | PM-requested metric — tasks not created for a CSP near a rejected point that would have been before. Genie owns the suppression and its counterfactual (would-have-surfaced-before); confirm how it's measured with Genie. |
 | §2 R4b / §4 skipped state / AC-STR-1 | Tell the CSP the check was "skipped", not "failed" | The never-block stance is a PM decision on failure UX; the exact wording is inferred. |
-| §4 | Figma link to confirm; experience-intent line | Screens are designed (S1 intercept / S2 reason sheet / S4 confirmation, provided by the PM); the exact Figma URL still needs pasting in, and the experience-intent line is inferred. |
+| §4 experience-intent line | The one-line experience-intent phrasing | Inferred wording; the screens and Figma links (design + prototype) are now provided. |
 | §7 AC-STR-1, AC-RACE-1, AC-DUP-1 | Marked ACs | Each rests on an inferred behaviour above (skip-on-no-points, late-response handling, idempotency) not yet confirmed by the PM. |
 | §9 delivery capability | "Deliver the pushed signal reliably" | M1 targets 100% of deliberate declines emitting a valid signal, which requires the push not be silently lost; whether to guarantee delivery (and how) is for PM + Eng to confirm. |
 
