@@ -138,8 +138,8 @@
 </tr>
 <tr>
 <td>M2</td>
-<td><strong>Booking-to-CSP distance ↓ (loop-level, Genie-driven)</strong> — the median distance between a booking and the CSP it is routed to falls, as Genie surfaces the most relevant (nearest-serving) CSP first</td>
-<td>current median booking-to-CSP distance — to fill ⚠️ <em>AI GENERATED — review</em></td>
+<td><strong>First-CSP coverage-decline rate ↓ (loop-level, Genie-driven)</strong> — the CSP a booking is <strong>first routed to</strong> declines it for the far-distance reason less often, because Genie stops routing far bookings to CSPs who have said they can&#39;t serve there — so bookings need fewer re-routes to be accepted</td>
+<td>current first-CSP coverage-decline rate — to fill ⚠️ <em>AI GENERATED — review</em></td>
 <td>Down and trending</td>
 <td>MQ-4</td>
 </tr>
@@ -368,7 +368,7 @@
 </tr>
 <tr>
 <td>MQ-4</td>
-<td>Over time, does the median booking-to-CSP distance fall as bookings route to the most relevant CSP first? (loop outcome, driven by Genie)</td>
+<td>Over time, does the first-routed CSP decline for the far-distance reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie)</td>
 <td>M2 ⚠️ <em>AI GENERATED — review</em></td>
 </tr>
 <tr>
@@ -664,8 +664,8 @@
 </tr>
 <tr>
 <td>§1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5</td>
-<td>M2 (median distance) and M3 (coverage-decline share) baselines = &quot;to fill&quot;; targets &quot;down and trending&quot;; both downstream (Genie)</td>
-<td>The routing payoff depends on Genie acting on the signal, so it&#39;s tracked at the loop level, not owned here; the baseline distance and coverage-decline numbers still need pulling.</td>
+<td>M2 (first-CSP coverage-decline rate) and M3 (overall coverage-decline share) baselines = &quot;to fill&quot;; targets &quot;down and trending&quot;; both downstream (Genie)</td>
+<td>The routing payoff depends on Genie acting on the signal, so it&#39;s tracked at the loop level, not owned here; the baseline decline rates still need pulling.</td>
 </tr>
 <tr>
 <td>§1 M4 target / §6 MQ-6</td>

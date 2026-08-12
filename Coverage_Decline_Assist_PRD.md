@@ -32,7 +32,7 @@
 | ID | Metric | Baseline | Target | Source |
 |---|---|---|---|---|
 | M1 | **Feedback-loop integrity** — of deliberate coverage declines, the share that emit a valid point-level signal to Genie (CSP + capture point + only the points shown as rejected) | n/a — new capability | 100% | MQ-2 |
-| M2 | **Booking-to-CSP distance ↓ (loop-level, Genie-driven)** — the median distance between a booking and the CSP it is routed to falls, as Genie surfaces the most relevant (nearest-serving) CSP first | current median booking-to-CSP distance — to fill ⚠️ *AI GENERATED — review* | Down and trending | MQ-4 |
+| M2 | **First-CSP coverage-decline rate ↓ (loop-level, Genie-driven)** — the CSP a booking is **first routed to** declines it for the far-distance reason less often, because Genie stops routing far bookings to CSPs who have said they can't serve there — so bookings need fewer re-routes to be accepted | current first-CSP coverage-decline rate — to fill ⚠️ *AI GENERATED — review* | Down and trending | MQ-4 |
 | M3 | **Coverage-decline share ↓ (loop-level, Genie-driven)** — the share of bookings declined for the far-distance reason falls, as far / irrelevant bookings stop being routed to a CSP who can't serve them | current coverage-decline share — to fill ⚠️ *AI GENERATED — review* | Down and trending | MQ-5 |
 | M4 | **Prevented mis-routes (loop-level, Genie-driven)** — future bookings near a rejected point for which this CSP is **no longer surfaced** in Genie's candidate list, so **no task is created** for him — jobs that, before his signal, would have been routed to him | n/a — new capability | Grows as Genie acts on the signals — each one is an irrelevant task the CSP is spared and a routing attempt Wiom saves ⚠️ *AI GENERATED — review* | MQ-6 |
 
@@ -135,7 +135,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 | MQ-1 | Of coverage declines where the intercept was shown, what share backed off ("OK, I'll connect")? — signal-quality diagnostic, not a target | diagnostic · G3 |
 | MQ-2 | For every confirmed coverage decline, was a signal emitted to Genie carrying only the points that were shown? | M1 · G1 · G4 invariant |
 | MQ-3 | Of coverage-reason declines, how many saw the intercept vs proceeded without it (no points / API not in time)? | R4 · G2 |
-| MQ-4 | Over time, does the median booking-to-CSP distance fall as bookings route to the most relevant CSP first? (loop outcome, driven by Genie) | M2 ⚠️ *AI GENERATED — review* |
+| MQ-4 | Over time, does the first-routed CSP decline for the far-distance reason less often — the first routing attempt accepted more, needing fewer re-routes? (loop outcome, driven by Genie) | M2 ⚠️ *AI GENERATED — review* |
 | MQ-5 | Over time, does the coverage-decline share fall as far / irrelevant bookings stop being routed to a CSP who can't serve them? (loop outcome, driven by Genie) | M3 ⚠️ *AI GENERATED — review* |
 | MQ-6 | Per CSP × rejected point, how many future bookings did Genie exclude him from the candidate list for — because of his coverage signal — that it would have surfaced him for before, i.e. tasks never created for him? (loop outcome, driven by Genie) | M4 ⚠️ *AI GENERATED — review* |
 
@@ -241,7 +241,7 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | Location | What was generated | Basis |
 |---|---|---|
 | Header | Reviewer + Consulted (Genie) = TBD | No names supplied; the feature depends on Genie's API, so a Genie consult is expected. |
-| §1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5 | M2 (median distance) and M3 (coverage-decline share) baselines = "to fill"; targets "down and trending"; both downstream (Genie) | The routing payoff depends on Genie acting on the signal, so it's tracked at the loop level, not owned here; the baseline distance and coverage-decline numbers still need pulling. |
+| §1 M2–M3 baselines &amp; targets / §6 MQ-4, MQ-5 | M2 (first-CSP coverage-decline rate) and M3 (overall coverage-decline share) baselines = "to fill"; targets "down and trending"; both downstream (Genie) | The routing payoff depends on Genie acting on the signal, so it's tracked at the loop level, not owned here; the baseline decline rates still need pulling. |
 | §1 M4 target / §6 MQ-6 | "Grows as Genie acts…"; prevented-mis-route count is downstream (Genie) | PM-requested metric — tasks not created for a CSP near a rejected point that would have been before. Genie owns the suppression and its counterfactual (would-have-surfaced-before); confirm how it's measured with Genie. |
 | §2 R4b / §4 skipped state / AC-STR-1 | Tell the CSP the check was "skipped", not "failed" | The never-block stance is a PM decision on failure UX; the exact wording is inferred. |
 | §4 | Figma link to confirm; experience-intent line | Screens are designed (S1 intercept / S2 reason sheet / S4 confirmation, provided by the PM); the exact Figma URL still needs pasting in, and the experience-intent line is inferred. |
