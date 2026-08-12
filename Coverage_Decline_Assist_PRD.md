@@ -51,7 +51,7 @@
 | R1 | As a CSP about to decline a booking because it's too far from me, I first see the connections I already run nearby, so I don't refuse a job I can serve. | **(a)** When he **submits** a decline / install-failure with the coverage reason, fetch his nearby active/splitter points from **Genie's API** and show a **blocking confirm** (the "coverage intercept") — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised (within C-01). **(b)** Require an explicit choice — **"I won't be able to connect"** (confirm) or **"OK, I'll connect"** (reconsider). | Finalise the coverage decline without the intercept when nearby points exist and can be shown. |
 | R2 | As a CSP who reconsiders, tapping "OK, I'll connect" returns me to the job with nothing held against me. | **(a)** On reconsider, submit no decline and keep the booking with the CSP. **(b)** Emit nothing to Genie. | Record a decline or send any signal to Genie on a reconsider. |
 | R3 | As Wiom, when the CSP confirms "I won't be able to connect", I remove the booking, capture the deliberate decline and the points he rejected, and send them to Genie. | **(a)** Record the coverage decline / install-failure as **deliberate** — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a **decline** (pre-acceptance) removes the booking; an **install-failure** (post-acceptance) records the failure and hands the task back for re-routing. **(b)** Capture the exact points he was shown (from Genie's API), **in the order they were shown**, as the points he is rejecting. **(c)** **Push** an explicit signal to Genie carrying: the **connection id and customer id** (the booking), the **CSP**, whether it was a **decline or an install-failure**, the **coverage reason** (booking too far), and the **points he was shown, in order**, as the points he rejected. | Send Genie any point that was not shown to him (G1); push a signal for any non-coverage reason (G5); or leave the signal in a database for Genie to poll instead of pushing it. |
-| R4 | As a CSP, I can always complete my decline even when the nearby points can't be shown. | **(a)** If Genie returns no nearby points, or its API does not respond within C-01, let the coverage decline proceed without the assist — record it and emit it without a rejected-points list. **(b)** Tell the CSP the check was skipped, not that it failed. ⚠️ *AI GENERATED — review* | Block, trap, or spin the CSP because the assist could not load (G2). |
+| R4 | As a CSP, I can always complete my decline even when the nearby points can't be shown. | **(a)** If Genie returns no nearby points, or its API does not respond within C-01, let the coverage decline proceed without the intercept — record it, but **send no signal to Genie**: the CSP was shown nothing, so he made no informed decision and there is nothing to report. **(b)** Tell the CSP the check was skipped, not that it failed. ⚠️ *AI GENERATED — review* | Block, trap, or spin the CSP because the intercept could not load (G2); or send Genie a signal from a decline where no points were shown. |
 | R5 | As Wiom, I want the same assist and capture at both moments a coverage reason is given, so the signal is complete. | Run the identical assist + capture at a **decline** (pre-acceptance) and an **install-failure report** (after acceptance). | Let the two paths capture differently, or skip the assist at one of them. |
 
 ---
@@ -64,7 +64,7 @@
 flowchart TD
     A["CSP submits a decline / install-failure — booking too far (coverage reason)"] --> B["Fetch nearby active/splitter points from Genie API"]
     B --> C{"Points shown within C-01?"}
-    C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline, emit without rejected points"]
+    C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline; no signal to Genie (no informed decision)"]
     C -- "Yes" --> D["Coverage intercept — count, distances, list, notice"]
     D --> E{"CSP's choice"}
     E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him"]
@@ -81,7 +81,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 |---|---|---|---|---|---|
 | T1 | Intercept shown | CSP taps "I won't be able to connect" | Points were shown | Recorded &amp; emitted | Booking removed from him with a confirmation ("booking removed" + his reason, S4); coverage decline / install-failure recorded as **deliberate** (R3a); rejected points = the points shown (R3b); signal emitted to Genie — CSP, capture point, rejected points (R3c, G1, G4). |
 | T2 | Intercept shown | CSP taps "OK, I'll connect" | — | (no record) | No decline recorded; nothing emitted; booking stays with the CSP (R2, G3). |
-| T3 | — | CSP submits the coverage reason | No points shown within C-01 (none nearby, or API slow/down) | Recorded &amp; emitted | Coverage decline / install-failure finalised; signal emitted **without** a rejected-points list; CSP told the check was skipped (R4, G2). |
+| T3 | — | CSP submits the coverage reason | No points shown within C-01 (none nearby, or API slow/down) | Recorded, **not** sent | Coverage decline / install-failure finalised and recorded; **no signal sent to Genie** — the CSP was shown no points, so there is no informed decision to report; CSP told the check was skipped (R4, G2). |
 
 ---
 
@@ -116,7 +116,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 | Field — outcome + reason | reason-capture (R3a) | confirms the outcome and shows his reason (the booking was too far to serve); copy is capture-point-specific — "booking removed" on a decline, failure recorded on an install-failure |
 | Action — OK | — | dismisses to the feed |
 
-**Skipped (no intercept).** When Genie returns no nearby points or its API is not in time (C-01), the intercept (S1) is not shown; the decline is finalised (T3) and the CSP sees a neutral "we couldn't check nearby connections" note — never an error that blocks (R4b, G2). ⚠️ *AI GENERATED — review*
+**Skipped (no intercept).** When Genie returns no nearby points or its API is not in time (C-01), the intercept (S1) is not shown; the decline is finalised (T3) with **no signal sent to Genie** (no informed decision), and the CSP sees a neutral "we couldn't check nearby connections" note — never an error that blocks (R4b, G2). ⚠️ *AI GENERATED — review*
 
 ---
 
@@ -160,7 +160,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-STR-1 | **Given** a CSP selects the coverage reason and Genie returns no nearby points, **When** he confirms the decline, **Then** the coverage decline is recorded and emitted to Genie without a rejected-points list, and he is told the nearby check was skipped. | R4a · R4b · T3 · G2 | Settled ⚠️ *AI GENERATED — review* |
+| AC-STR-1 | **Given** a CSP selects the coverage reason and Genie returns no nearby points, **When** he confirms the decline, **Then** the coverage decline is recorded, **no signal is sent to Genie** (no points were shown, so no informed decision), and he is told the nearby check was skipped. | R4a · R4b · T3 · G2 | Settled ⚠️ *AI GENERATED — review* |
 
 ### WF — Workflows (both capture points)
 
@@ -178,7 +178,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-FAIL-1 | **Given** a CSP selects the coverage reason, **When** Genie's API has not returned points within C-01 (3 s), **Then** the app lets him complete the decline without the assist — never blocked or left spinning — and the decline is emitted without rejected points. | R4a · G2 · C-01 · T3 | Settled |
+| AC-FAIL-1 | **Given** a CSP selects the coverage reason, **When** Genie's API has not returned points within C-01 (3 s), **Then** the app lets him complete the decline without the intercept — never blocked or left spinning — and **no signal is sent to Genie**. | R4a · G2 · C-01 · T3 | Settled |
 
 ### REG — Regression (no downstream command)
 
@@ -191,7 +191,7 @@ Lifecycle of a **coverage-decline assist** (created when a CSP selects the cover
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
 | AC-BV-1 | **Given** Genie's points arrive at 2.9 s (just inside C-01 of 3 s), **When** the CSP is on the coverage reason, **Then** the blocking-confirm assist is shown. | C-01 · R1a | Settled |
-| AC-BV-2 | **Given** Genie's points arrive at 3.1 s (just outside C-01), **When** the CSP is on the coverage reason, **Then** the assist is skipped and the decline proceeds (T3) — the late points are ignored. | C-01 · R4a · T3 | Settled |
+| AC-BV-2 | **Given** Genie's points arrive at 3.1 s (just outside C-01), **When** the CSP is on the coverage reason, **Then** the assist is skipped, the decline proceeds (T3), and no signal is sent to Genie — the late points are ignored. | C-01 · R4a · T3 | Settled |
 
 ### RACE — Races
 
@@ -231,7 +231,7 @@ What the platform must be able to do for this feature to exist. Whether these ar
 | Show a blocking confirm with those points and two choices — reconsider, or confirm not serviceable. | R1 · T1 · T2 |
 | Capture the deliberate decline and the exact points shown as rejected — never a point not shown. | R3 · G1 |
 | Push an explicit signal to Genie — connection + customer id, CSP, decline vs install-failure, the coverage reason, and the ordered points shown as rejected — for the coverage reason only, taking no routing or de-listing action itself, and not relying on Genie to read it from a database. | R3c · G4 · G5 |
-| Let the CSP complete his decline when the points can't be shown (none, or API not in time), never blocking him. | R4 · G2 · C-01 |
+| Let the CSP complete his decline when the points can't be shown (none, or API not in time), never blocking him — recording the decline but sending no signal to Genie. | R4 · G2 · C-01 |
 | Run the identical assist and capture at both a decline and an install-failure report. | R5 |
 
 ---
