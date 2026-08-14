@@ -77,8 +77,8 @@
 <hr>
 <h2>1. Objective &amp; Definition of Success</h2>
 <p><strong>Objective.</strong> Turn a CSP&#39;s &quot;this booking is too far from me&quot; decline into a clean, point-level <strong>record the routing system can act on</strong> — so Wiom sends each booking to the <strong>most relevant CSP first</strong>, and the CSP stops being handed far, irrelevant jobs. When a CSP declines a booking as too far, the app shows him the connections he already runs nearby; this exists to make his answer <strong>deliberate and accurate</strong> — not to talk him out of declining — so a reflex tap on a job he could actually serve doesn&#39;t pollute the loop. When he confirms, we capture the exact points he is rejecting and <strong>log them to the decline log</strong>. <strong>The win is mutual:</strong> the CSP is no longer surfaced for bookings he genuinely can&#39;t serve, and Wiom routes to a nearer CSP instead. This feature owns the <strong>capture and the log-write</strong>; Genie <strong>reads the decline log</strong> and acts, and DAS is affected only indirectly — it routes on what Genie does next.</p>
-<p><strong>What success is — and isn&#39;t.</strong> Success is a <strong>trustworthy feedback loop into routing</strong>, not a lower decline rate and not making CSPs reconsider. A confirmed &quot;too far&quot; decline is a <em>good</em> outcome — it is correct information the routing system needs. The intercept&#39;s only job is to keep that information accurate.</p>
-<p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the Location is Far reason — the CSP says <strong>the booking is too far from him</strong> (the location is not serviceable / too far) — at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>blocking confirm</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>logging the decline, with its rejected points, to the decline log</strong> (a pre-existing table from which Genie reads). Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the logged record (G1).</p>
+<p><strong>What success is — and isn&#39;t.</strong> Success is a <strong>trustworthy feedback loop into routing</strong>, not a lower decline rate and not making CSPs reconsider. A confirmed &quot;too far&quot; decline is a <em>good</em> outcome — it is correct information the routing system needs. The confirmation bottom sheet&#39;s only job is to keep that information accurate.</p>
+<p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the Location is Far reason — the CSP says <strong>the booking is too far from him</strong> (the location is not serviceable / too far) — at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>confirmation bottom sheet</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>logging the decline, with its rejected points, to the decline log</strong> (a pre-existing table from which Genie reads). Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the logged record (G1).</p>
 <p><strong>What Genie does with the logged decline is out of scope</strong> — the unit, threshold, de-listing and any re-routing are all Genie&#39;s. This feature <strong>ends at the log write</strong>: the decline, with its details, is written to a <strong>pre-existing table (the decline log)</strong>, and <strong>Genie reads from that table</strong> (R3c). The feature makes no call to Genie.</p>
 <h3>Guardrails — promises that hold on every path</h3>
 <table>
@@ -161,8 +161,8 @@
 <td>MQ-6</td>
 </tr>
 </tbody></table>
-<p><strong>This feature&#39;s own success is M1 — the loop is clean and complete.</strong> M2–M4 are the loop&#39;s downstream payoff and are driven by <strong>Genie reading the log and acting</strong>, not by this feature alone; they are tracked at the loop level, not owned here. Their integrity rests on the logged record being accurate — the intercept and G1 keep it so.</p>
-<p><strong>Diagnostic (not a target).</strong> The back-off / reconsideration rate is watched (MQ-1) purely as a <strong>data-quality check</strong> — it tells us the intercept is filtering out reflex declines so the loop isn&#39;t polluted. It is <strong>not</strong> a success metric: the aim is an accurate record, not fewer declines or more reconsiders.</p>
+<p><strong>This feature&#39;s own success is M1 — the loop is clean and complete.</strong> M2–M4 are the loop&#39;s downstream payoff and are driven by <strong>Genie reading the log and acting</strong>, not by this feature alone; they are tracked at the loop level, not owned here. Their integrity rests on the logged record being accurate — the confirmation bottom sheet and G1 keep it so.</p>
+<p><strong>Diagnostic (not a target).</strong> The back-off / reconsideration rate is watched (MQ-1) purely as a <strong>data-quality check</strong> — it tells us the confirmation bottom sheet is filtering out reflex declines so the loop isn&#39;t polluted. It is <strong>not</strong> a success metric: the aim is an accurate record, not fewer declines or more reconsiders.</p>
 <p><strong>Invariant (not a metric):</strong> G1 point-not-shown-logged = 0, zero tolerance. Monitored via MQ-2, not trended.</p>
 <hr>
 <h2>2. User Stories &amp; Rules</h2>
@@ -178,13 +178,13 @@
 <tbody><tr>
 <td>R1</td>
 <td>As a CSP about to decline a booking because it&#39;s too far from me, I first see the connections I already run nearby, so I don&#39;t refuse a job I can serve.</td>
-<td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the Location is Far reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>blocking confirm</strong> (the &quot;Location is Far intercept&quot;) — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised. <strong>(b)</strong> Require an explicit choice — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
-<td>Finalise the Location is Far decline without the intercept when nearby points exist and can be shown.</td>
+<td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the Location is Far reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>confirmation bottom sheet</strong> (blocking — he must choose one) — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised. <strong>(b)</strong> Require an explicit choice — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
+<td>Finalise the Location is Far decline without the confirmation bottom sheet when nearby points exist and can be shown.</td>
 </tr>
 <tr>
 <td>R2</td>
 <td>As a CSP who reconsiders, tapping &quot;OK, I&#39;ll connect&quot; returns me to the job with nothing held against me.</td>
-<td><strong>(a)</strong> On reconsider, submit no decline and keep the booking with the CSP. <strong>(b)</strong> Log nothing — no decline is written. <strong>(c)</strong> Record the back-off event — the intercept was shown and he reconsidered — for measurement (MQ-1).</td>
+<td><strong>(a)</strong> On reconsider, submit no decline and keep the booking with the CSP. <strong>(b)</strong> Log nothing — no decline is written. <strong>(c)</strong> Record the back-off event — the confirmation bottom sheet was shown and he reconsidered — for measurement (MQ-1).</td>
 <td>Record a decline, or log anything, on a reconsider.</td>
 </tr>
 <tr>
@@ -196,8 +196,8 @@
 <tr>
 <td>R4</td>
 <td>As a CSP, I can always complete my decline even when the nearby points can&#39;t be shown.</td>
-<td><strong>(a)</strong> If Genie returns no nearby points, or its API does not respond in time, let the Location is Far decline proceed without the intercept — record it, but <strong>log no rejected-points record</strong>: the CSP was shown nothing, so he made no informed decision and there is nothing to log. <strong>(b)</strong> Tell the CSP the check was skipped, not that it failed.</td>
-<td>Block, trap, or spin the CSP because the intercept could not load (G2); or log a rejected-points record from a decline where no points were shown.</td>
+<td><strong>(a)</strong> If Genie returns no nearby points, or its API does not respond in time, let the Location is Far decline proceed without the confirmation bottom sheet — record it, but <strong>log no rejected-points record</strong>: the CSP was shown nothing, so he made no informed decision and there is nothing to log. <strong>(b)</strong> Tell the CSP the check was skipped, not that it failed.</td>
+<td>Block, trap, or spin the CSP because the confirmation bottom sheet could not load (G2); or log a rejected-points record from a decline where no points were shown.</td>
 </tr>
 <tr>
 <td>R5</td>
@@ -213,12 +213,12 @@
     A["CSP submits a decline / install-failure — booking too far (Location is Far reason)"] --> B["Fetch nearby active/splitter points from Genie API"]
     B --> C{"Points shown in time?"}
     C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline; nothing logged (no informed decision)"]
-    C -- "Yes" --> D["Location is Far intercept — count, distances, list, notice"]
+    C -- "Yes" --> D["Location is Far confirmation bottom sheet — count, distances, list, notice"]
     D --> E{"CSP's choice"}
     E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him; back-off logged"]
     E -- "I won't be able to connect" --> T1["T1 — remove booking; record deliberate decline + rejected points; write to decline log; show confirmation"]
 </pre>
-<p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the app has already proceeded without the intercept (T3), that stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
+<p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the app has already proceeded without the confirmation bottom sheet (T3), that stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
 <h3>3b. State transition table — canon</h3>
 <p>Lifecycle of a <strong>Location is Far decline assist</strong> (created when a CSP selects the Location is Far reason at a decline or an install-failure). The reason picker itself (Part 1) and Genie&#39;s consumption of the logged decline (unit, threshold, consequence) are out of scope; this spec governs only the CSP-side assist, capture and log.</p>
 <table>
@@ -234,7 +234,7 @@
 </thead>
 <tbody><tr>
 <td>T1</td>
-<td>Intercept shown</td>
+<td>Confirmation bottom sheet shown</td>
 <td>CSP taps &quot;I won&#39;t be able to connect&quot;</td>
 <td>Points were shown</td>
 <td>Recorded &amp; logged</td>
@@ -242,7 +242,7 @@
 </tr>
 <tr>
 <td>T2</td>
-<td>Intercept shown</td>
+<td>Confirmation bottom sheet shown</td>
 <td>CSP taps &quot;OK, I&#39;ll connect&quot;</td>
 <td>—</td>
 <td>Reconsidered</td>
@@ -260,14 +260,14 @@
 <hr>
 <h2>4. Screen Requirements</h2>
 <p><strong>Experience intent:</strong> the app is on the CSP&#39;s side — <em>&quot;before you turn this down, here&#39;s what you already run nearby&quot;</em> — and honest about what happens next (<em>&quot;we&#39;ll stop sending you bookings here so your time isn&#39;t wasted&quot;</em>). Never nagged, never blocked.</p>
-<p><strong>Master design file:</strong> Figma · &quot;PA — Dev → January 2026 Onwards&quot; (CSP app) — <a href="https://figma.com/design/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?t=sU3hI2FvbPQONDUO-0">design &amp; assets</a> · <a href="https://www.figma.com/proto/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?node-id=10827-2818&viewport=382%2C-6863%2C0.44&t=mwwU62RAMEkIo0IQ-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=10827%3A2818&show-proto-sidebar=1&page-id=9780%3A1268">interactive prototype</a>. Frames <strong>S2</strong> (reason sheet, Part 1), <strong>S1</strong> (Location is Far intercept), <strong>S4</strong> (confirmation).</p>
+<p><strong>Master design file:</strong> Figma · &quot;PA — Dev → January 2026 Onwards&quot; (CSP app) — <a href="https://figma.com/design/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?t=sU3hI2FvbPQONDUO-0">design &amp; assets</a> · <a href="https://www.figma.com/proto/W2Z3B5xfFO3UibJSzkyHn2/PA---Dev--%3E-January-2026-Onwards?node-id=10827-2818&viewport=382%2C-6863%2C0.44&t=mwwU62RAMEkIo0IQ-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=10827%3A2818&show-proto-sidebar=1&page-id=9780%3A1268">interactive prototype</a>. Frames <strong>S2</strong> (reason sheet, Part 1), <strong>S1</strong> (Location is Far confirmation bottom sheet), <strong>S4</strong> (confirmation).</p>
 <blockquote>
 <p>⚑ <strong>Exact copy comes from Figma.</strong> All strings (titles, the distance phrasing, the notice, button labels — English and Hindi) are the Figma file&#39;s; the copy quoted here is indicative.</p>
 </blockquote>
-<h3>Location is Far intercept (S1) — CSP app — decline &amp; install-failure</h3>
+<h3>Location is Far confirmation bottom sheet (S1) — CSP app — decline &amp; install-failure</h3>
 <p><strong>States:</strong> loading (fetching points, brief wait) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
 <strong>Freshness:</strong> the points and distances reflect Genie&#39;s API response for this booking at the moment of submit.
-<strong>Modal:</strong> the intercept is a <strong>blocking modal</strong> — the CSP must pick one of the two actions; there is no dismiss-without-choosing (R1b).</p>
+<strong>Blocking:</strong> the confirmation bottom sheet is <strong>blocking</strong> — the CSP must pick one of the two actions; there is no dismiss-without-choosing (R1b).</p>
 <table>
 <thead>
 <tr>
@@ -324,10 +324,10 @@
 <td>dismisses to the feed</td>
 </tr>
 </tbody></table>
-<p><strong>Skipped (no intercept).</strong> When Genie returns no nearby points or its API is not in time, the intercept (S1) is not shown; the decline is finalised (T3) with <strong>nothing logged</strong> (no informed decision), and the CSP sees a neutral &quot;we couldn&#39;t check nearby connections&quot; note — never an error that blocks (R4b, G2).</p>
+<p><strong>Skipped (no confirmation bottom sheet).</strong> When Genie returns no nearby points or its API is not in time, the confirmation bottom sheet (S1) is not shown; the decline is finalised (T3) with <strong>nothing logged</strong> (no informed decision), and the CSP sees a neutral &quot;we couldn&#39;t check nearby connections&quot; note — never an error that blocks (R4b, G2).</p>
 <hr>
 <h2>5. Configurability</h2>
-<p><strong>None.</strong> This feature has no PM-configurable parameters. The app waits briefly for Genie&#39;s points and, if they do not arrive, proceeds without the intercept — never blocking the CSP (R4, G2). That wait is a fixed implementation timeout owned by Eng, not a business config.</p>
+<p><strong>None.</strong> This feature has no PM-configurable parameters. The app waits briefly for Genie&#39;s points and, if they do not arrive, proceeds without the confirmation bottom sheet — never blocking the CSP (R4, G2). That wait is a fixed implementation timeout owned by Eng, not a business config.</p>
 <hr>
 <h2>6. Measurement</h2>
 <table>
@@ -340,7 +340,7 @@
 </thead>
 <tbody><tr>
 <td>MQ-1</td>
-<td>Of Location is Far declines where the intercept was shown, what share backed off (&quot;OK, I&#39;ll connect&quot;)? — data-quality diagnostic, not a target</td>
+<td>Of Location is Far declines where the confirmation bottom sheet was shown, what share backed off (&quot;OK, I&#39;ll connect&quot;)? — data-quality diagnostic, not a target</td>
 <td>diagnostic · G3</td>
 </tr>
 <tr>
@@ -350,7 +350,7 @@
 </tr>
 <tr>
 <td>MQ-3</td>
-<td>Of Location is Far declines, how many saw the intercept vs proceeded without it (no points / API not in time)?</td>
+<td>Of Location is Far declines, how many saw the confirmation bottom sheet vs proceeded without it (no points / API not in time)?</td>
 <td>R4 · G2</td>
 </tr>
 <tr>
@@ -375,13 +375,13 @@
 </tr>
 <tr>
 <td>MQ-8</td>
-<td>Is every screen shown and every CTA tapped across the flow — the Location is Far intercept (S1), the confirmation (S4), and the two actions (&quot;I won&#39;t be able to connect&quot; / &quot;OK, I&#39;ll connect&quot;) — captured as an event (<strong>preferably in CleverTap</strong>), so the full funnel (intercept shown → confirm / reconsider / skipped) can be analysed?</td>
+<td>Is every screen shown and every CTA tapped across the flow — the Location is Far confirmation bottom sheet (S1), the confirmation (S4), and the two actions (&quot;I won&#39;t be able to connect&quot; / &quot;OK, I&#39;ll connect&quot;) — captured as an event (<strong>preferably in CleverTap</strong>), so the full funnel (confirmation bottom sheet shown → confirm / reconsider / skipped) can be analysed?</td>
 <td>MQ-1 · MQ-3 · G3 · R2c</td>
 </tr>
 </tbody></table>
 <hr>
 <h2>7. Acceptance Criteria</h2>
-<p><strong>Shared precondition (CONF &amp; BACK groups).</strong> A CSP with a booking in the <strong>pre-acceptance state</strong>; Genie returns <strong>3</strong> nearby active/splitter points for it; he has selected the &quot;Location is Far&quot; reason <em>(the reason value is owned by the Reason Set PRD, Part 1)</em>; the intercept (S1) is showing those 3 points.</p>
+<p><strong>Shared precondition (CONF &amp; BACK groups).</strong> A CSP with a booking in the <strong>pre-acceptance state</strong>; Genie returns <strong>3</strong> nearby active/splitter points for it; he has selected the &quot;Location is Far&quot; reason <em>(the reason value is owned by the Reason Set PRD, Part 1)</em>; the confirmation bottom sheet (S1) is showing those 3 points.</p>
 <h3>CONF — Confirmed &quot;I won&#39;t be able to connect&quot; (T1)</h3>
 <table>
 <thead>
@@ -412,7 +412,7 @@
 </tr>
 <tr>
 <td>AC-CONF-2</td>
-<td><strong>Given</strong> the intercept showed <strong>3</strong> points while Genie&#39;s nearby-points response contained <strong>5</strong>, <strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the <strong>logged record</strong> carries <strong>exactly those 3 shown points and none of the 2</strong> that were not shown.</td>
+<td><strong>Given</strong> the confirmation bottom sheet showed <strong>3</strong> points while Genie&#39;s nearby-points response contained <strong>5</strong>, <strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the <strong>logged record</strong> carries <strong>exactly those 3 shown points and none of the 2</strong> that were not shown.</td>
 <td>R3c · G1 · T1</td>
 <td>Settled</td>
 </tr>
@@ -441,7 +441,7 @@
 </tr>
 <tr>
 <td>AC-BACK-1c</td>
-<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>exactly one back-off event</strong> is logged for this booking, <strong>correlated by booking id</strong> to the moment the intercept was shown, carrying the <strong>count of points shown (3)</strong>.</td>
+<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>exactly one back-off event</strong> is logged for this booking, <strong>correlated by booking id</strong> to the moment the confirmation bottom sheet was shown, carrying the <strong>count of points shown (3)</strong>.</td>
 <td>R2c · T2 · MQ-1</td>
 <td>Settled</td>
 </tr>
@@ -539,7 +539,7 @@
 </thead>
 <tbody><tr>
 <td>AC-FAIL-1</td>
-<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie&#39;s API does not respond, <strong>When</strong> the decline is made, <strong>Then</strong> the CSP completes it without the intercept — <strong>never blocked or left waiting</strong> — and <strong>nothing is logged</strong> (T3).</td>
+<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie&#39;s API does not respond, <strong>When</strong> the decline is made, <strong>Then</strong> the CSP completes it without the confirmation bottom sheet — <strong>never blocked or left waiting</strong> — and <strong>nothing is logged</strong> (T3).</td>
 <td>R4a · G2 · T3</td>
 <td>Settled</td>
 </tr>
@@ -556,7 +556,7 @@
 </thead>
 <tbody><tr>
 <td>AC-REG-1</td>
-<td><strong>Given</strong> a CSP declines for any reason <strong>other than Location is Far</strong>, <strong>When</strong> the decline is made, <strong>Then</strong> <strong>no intercept appears, no nearby-points fetch is made, and nothing is logged</strong> — the Part 1 reason-capture is the only behaviour.</td>
+<td><strong>Given</strong> a CSP declines for any reason <strong>other than Location is Far</strong>, <strong>When</strong> the decline is made, <strong>Then</strong> <strong>no confirmation bottom sheet appears, no nearby-points fetch is made, and nothing is logged</strong> — the Part 1 reason-capture is the only behaviour.</td>
 <td>§1 Boundary · G5</td>
 <td>Settled</td>
 </tr>
@@ -573,7 +573,7 @@
 </thead>
 <tbody><tr>
 <td>AC-RACE-1</td>
-<td><strong>Given</strong> the flow already proceeded without the intercept and the decline is registered (T3), <strong>When</strong> Genie&#39;s points arrive later, <strong>Then</strong> they are <strong>ignored</strong> — no intercept appears and the registered decline is <strong>unchanged</strong>.</td>
+<td><strong>Given</strong> the flow already proceeded without the confirmation bottom sheet and the decline is registered (T3), <strong>When</strong> Genie&#39;s points arrive later, <strong>Then</strong> they are <strong>ignored</strong> — no confirmation bottom sheet appears and the registered decline is <strong>unchanged</strong>.</td>
 <td>§3a precedence</td>
 <td>Settled</td>
 </tr>
@@ -590,7 +590,7 @@
 </thead>
 <tbody><tr>
 <td>AC-DUP-1</td>
-<td><strong>Given</strong> the intercept is shown with points, <strong>When</strong> the CSP <strong>double-taps</strong> &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> <strong>exactly one</strong> decline is registered and <strong>one</strong> record is logged for that booking, and the second tap adds nothing (the confirmation S4 is shown once).</td>
+<td><strong>Given</strong> the confirmation bottom sheet is shown with points, <strong>When</strong> the CSP <strong>double-taps</strong> &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> <strong>exactly one</strong> decline is registered and <strong>one</strong> record is logged for that booking, and the second tap adds nothing (the confirmation S4 is shown once).</td>
 <td>T1</td>
 <td>Settled</td>
 </tr>
@@ -632,12 +632,12 @@
 </tr>
 <tr>
 <td>Back-off</td>
-<td>The CSP tapping &quot;OK, I&#39;ll connect&quot; at the intercept — he reconsiders and keeps the job; no decline is recorded and nothing is logged, but the back-off event itself is logged for measurement (T2, G3, MQ-1).</td>
+<td>The CSP tapping &quot;OK, I&#39;ll connect&quot; at the confirmation bottom sheet — he reconsiders and keeps the job; no decline is recorded and nothing is logged, but the back-off event itself is logged for measurement (T2, G3, MQ-1).</td>
 <td>—</td>
 </tr>
 <tr>
 <td>Wait for Genie</td>
-<td><strong>Canonical definition:</strong> the brief wait for Genie&#39;s points before the app proceeds without the intercept so the CSP is never blocked (R4, G2); a fixed implementation timeout, not a business config.</td>
+<td><strong>Canonical definition:</strong> the brief wait for Genie&#39;s points before the app proceeds without the confirmation bottom sheet so the CSP is never blocked (R4, G2); a fixed implementation timeout, not a business config.</td>
 <td>Eng</td>
 </tr>
 </tbody></table>
@@ -656,7 +656,7 @@
 <td>R1a</td>
 </tr>
 <tr>
-<td>Show a blocking confirm with those points and two choices — reconsider, or confirm not serviceable.</td>
+<td>Show a confirmation bottom sheet with those points and two choices — reconsider, or confirm not serviceable.</td>
 <td>R1 · T1 · T2</td>
 </tr>
 <tr>
