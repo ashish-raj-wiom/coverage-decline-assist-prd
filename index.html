@@ -382,6 +382,23 @@
 <hr>
 <h2>7. Acceptance Criteria</h2>
 <p><strong>Shared precondition (CONF &amp; BACK groups).</strong> A CSP with a booking in the <strong>pre-acceptance state</strong>; Genie returns <strong>3</strong> nearby active/splitter points for it; he has selected the &quot;Location is Far&quot; reason <em>(the reason value is owned by the Reason Set PRD, Part 1)</em>; the confirmation bottom sheet (S1) is showing those 3 points.</p>
+<h3>SHOW — Confirmation bottom sheet (R1)</h3>
+<table>
+<thead>
+<tr>
+<th>AC</th>
+<th>Given / When / Then</th>
+<th>Verifies</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AC-SHOW-1</td>
+<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>3</strong> nearby points, <strong>When</strong> the decline is made, <strong>Then</strong> a <strong>blocking confirmation bottom sheet</strong> is shown with those 3 points — the count, closest distance, list and notice — <strong>before the decline is finalised</strong>, and he must pick <strong>&quot;I won&#39;t be able to connect&quot;</strong> or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (no dismiss-without-choosing).</td>
+<td>R1a · R1b</td>
+<td>Settled</td>
+</tr>
+</tbody></table>
 <h3>CONF — Confirmed &quot;I won&#39;t be able to connect&quot; (T1)</h3>
 <table>
 <thead>

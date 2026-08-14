@@ -148,6 +148,12 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 **Shared precondition (CONF &amp; BACK groups).** A CSP with a booking in the **pre-acceptance state**; Genie returns **3** nearby active/splitter points for it; he has selected the "Location is Far" reason *(the reason value is owned by the Reason Set PRD, Part 1)*; the confirmation bottom sheet (S1) is showing those 3 points.
 
+### SHOW — Confirmation bottom sheet (R1)
+
+| AC | Given / When / Then | Verifies | Status |
+|---|---|---|---|
+| AC-SHOW-1 | **Given** a CSP declines with the Location is Far reason and Genie returns **3** nearby points, **When** the decline is made, **Then** a **blocking confirmation bottom sheet** is shown with those 3 points — the count, closest distance, list and notice — **before the decline is finalised**, and he must pick **"I won't be able to connect"** or **"OK, I'll connect"** (no dismiss-without-choosing). | R1a · R1b | Settled |
+
 ### CONF — Confirmed "I won't be able to connect" (T1)
 
 | AC | Given / When / Then | Verifies | Status |

@@ -1,6 +1,6 @@
 # Decline due to Location is Far — CSP Assist & Capture — Tradeoffs Register
 
-Companion to `Coverage_Decline_Assist_PRD.md` (v1.0, signed off 12 Aug 2026). This records the decisions the PM made between presented options — the "why" behind the spec, for later reference. It is **not** part of the PRD.
+Companion to `Coverage_Decline_Assist_PRD.md` (**v1.2, signed off 14 Aug 2026**). This records the decisions the PM made between presented options — the "why" behind the spec, for later reference. It is **not** part of the PRD. Rows 1–12 are the v1.0 decisions (12 Aug); rows 13–17 are the v1.1/v1.2 amendments (14 Aug).
 
 | # | Decision point | Chosen | Rejected options | Why (PM's stated reason) | Date |
 |---|---|---|---|---|---|
@@ -16,3 +16,8 @@ Companion to `Coverage_Decline_Assist_PRD.md` (v1.0, signed off 12 Aug 2026). Th
 | 10 | Signal identity of rejected points | **The served point records echoed back, in order — no separate point id** | Mint a separate stable point id | The points round-trip: Genie served them and receives them back, so it can identify them without a new id | 12 Aug 2026 |
 | 11 | Configurability | **None** — the wait-for-Genie is a fixed Eng timeout, not a business config | Expose the wait window as a tunable parameter | Nothing here is a product-tunable value; the only knob is an implementation timeout | 12 Aug 2026 |
 | 12 | Terminology | **"Location is Far" / "Decline due to Location is Far"**; Genie acts directly, DAS only indirectly | "Coverage" wording; "(Genie / DAS) act on the signal" | Clear for the audience; DAS routes on what Genie sends next, so it is affected indirectly, not directly | 12 Aug 2026 |
+| 13 | §7 acceptance criteria | **Rewritten to be atomic and observable** — one claim per AC, every *Then* a checkable domain fact | Keep the bundled, narrative ACs (v1.0) | An AC-quality review found 3 of 4 clauses named no observable and bundling made a partial pass unreportable | 14 Aug 2026 |
+| 14 | AC trigger wording | **"When the CSP declines / reports an install-failure"** (and "reconsiders") | "When he submits a decline" | "Submit" was ambiguous — button tap vs API call — and load-bearing; the plain verbs remove it | 14 Aug 2026 |
+| 15 | The Genie wait as an AC threshold | **Removed the number** — the no-points case is phrased as "Genie returns no points (none, or no response)" | Give the wait a testable number in §7 | The wait is an Eng-owned implementation timeout (§5 = None); the ACs test the behaviour, not a threshold | 14 Aug 2026 |
+| 16 | **Delivery mechanism (reverses #8)** | **Log the decline to a pre-existing table — the decline log — that Genie reads** | Push an explicit signal to Genie (the v1.0 choice) | The decline log is the existing system-of-record and Genie already reads it; the feature ends at the log write and adds no new transport to Genie | 14 Aug 2026 |
+| 17 | Name of the S1 screen | **"Confirmation bottom sheet"** | "Intercept" | "Intercept" was undefined jargon; "confirmation bottom sheet" names the actual UI so readers aren't guessing | 14 Aug 2026 |
