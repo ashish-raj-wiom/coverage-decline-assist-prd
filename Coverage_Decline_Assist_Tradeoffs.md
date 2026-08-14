@@ -1,6 +1,6 @@
 # Decline due to Location is Far — CSP Assist & Capture — Tradeoffs Register
 
-Companion to `Coverage_Decline_Assist_PRD.md` (**v1.2, signed off 14 Aug 2026**). This records the decisions the PM made between presented options — the "why" behind the spec, for later reference. It is **not** part of the PRD. Rows 1–12 are the v1.0 decisions (12 Aug); rows 13–18 are the v1.1/v1.2 amendments (14 Aug).
+Companion to `Coverage_Decline_Assist_PRD.md` (**v1.3, signed off 14 Aug 2026**). This records the decisions the PM made between presented options — the "why" behind the spec, for later reference. It is **not** part of the PRD. Rows 1–12 are the v1.0 decisions (12 Aug); rows 13–20 are the v1.1–v1.3 amendments (14 Aug).
 
 | # | Decision point | Chosen | Rejected options | Why (PM's stated reason) | Date |
 |---|---|---|---|---|---|
@@ -22,3 +22,5 @@ Companion to `Coverage_Decline_Assist_PRD.md` (**v1.2, signed off 14 Aug 2026**)
 | 16 | **Delivery mechanism (reverses #8)** | **Log the decline to a pre-existing table — the decline table — that Genie reads** | Push an explicit signal to Genie (the v1.0 choice) | The decline table is the existing system-of-record and Genie already reads it; the feature ends at the write to the decline table and adds no new transport to Genie | 14 Aug 2026 |
 | 17 | Name of the S1 screen | **"Confirmation bottom sheet"** | "Intercept" | "Intercept" was undefined jargon; "confirmation bottom sheet" names the actual UI so readers aren't guessing | 14 Aug 2026 |
 | 18 | **Popup form (reverses #4)** | **Non-blocking popup** that offers the two actions | Blocking modal with no dismiss (the v1.0 choice) | The confirmation bottom sheet is a non-blocker popup, not a hard modal — it presents the two actions without trapping the CSP | 14 Aug 2026 |
+| 19 | Dismiss (close the popup without choosing) | **Treat dismiss as a reconsider (T2)** — booking stays, no decline row, one back-off event | Finalise the decline on dismiss; or log nothing at all | A dismiss is not a deliberate confirmation of "too far", so it must not write a decline row (that would pollute the loop); the booking stays with him and the abandonment is measured like a back-off | 14 Aug 2026 |
+| 20 | Post-acceptance install-failure outcome | **Hand the task back for re-routing** (R3a) — it re-enters routing for re-assignment | "Task stays accepted / not removed from him" (v1.2 AC wording) | That earlier wording contradicted R3a and the loop's purpose (route the booking to a nearer CSP); the CSP simply reports too-far and the booking re-routes | 14 Aug 2026 |

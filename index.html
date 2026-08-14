@@ -43,7 +43,7 @@
 <div class="topbar">
   <div class="wrap row">
     <span class="eyebrow">CSP Decline Intelligence · Part 2</span>
-    <span class="badge">Signed off · v1.2</span>
+    <span class="badge">Signed off · v1.3</span>
     <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">◑</button>
   </div>
 </div>
@@ -62,17 +62,18 @@
 <td><strong>Owner</strong> — Ashish Raj (PM)</td>
 <td><strong>Reviewer</strong> — Saurabh Goyal</td>
 <td><strong>Status</strong> — Signed off</td>
-<td><strong>Sign-off</strong> — Signed off · v1.2 · 14 Aug 2026</td>
+<td><strong>Sign-off</strong> — Signed off · v1.3 · 14 Aug 2026</td>
 </tr>
 <tr>
-<td><strong>Version</strong> — v1.2 · 14 Aug 2026</td>
+<td><strong>Version</strong> — v1.3 · 14 Aug 2026</td>
 <td><strong>Consulted — Genie (serviceability)</strong> — Maanas</td>
 <td></td>
 <td></td>
 </tr>
 </tbody></table>
 <blockquote>
-<p><strong>v1.2 · 14 Aug 2026.</strong> Two changes. <strong>(1)</strong> The CSP world <strong>no longer sends a signal to Genie.</strong> Every Location is Far decline / install-failure is <strong>logged, with all its details, to a pre-existing table — the decline table — from which Genie reads.</strong> This feature ends at the write to the decline table; Genie&#39;s read and consumption are out of scope. <strong>(2)</strong> The §7 acceptance criteria were rewritten to be <strong>atomic and observable</strong> (per an AC-quality review), with product rulings baked in — a back-off logs only (no decline at all), the &quot;submit&quot; wording is dropped for &quot;declines / reconsiders&quot;, and the Genie wait/timeout number is removed. Rules, transitions and scope are otherwise unchanged.</p>
+<p><strong>v1.3 · 14 Aug 2026.</strong> §7 hardened after an AC-quality pass — every AC made <strong>atomic and observable</strong> (20 → 27), each <em>Then</em> a single checkable domain fact. Three canon points were settled in the process: the <strong>non-blocker confirmation bottom sheet&#39;s dismiss path</strong> is now defined as a reconsider (R2d · T2 · AC-BACK-3); the <strong>post-acceptance install-failure</strong> outcome is stated as <em>hand the task back for re-routing</em> (R3a), removing the earlier &quot;task stays accepted / not removed&quot; wording; and <strong>boundary + duplicate</strong> coverage was added (1 nearby point shown; double-tap reconsider). Scope is unchanged.</p>
+<p><strong>v1.2 · 14 Aug 2026.</strong> The CSP world <strong>no longer sends a signal to Genie</strong> — every Location is Far decline / install-failure is <strong>logged, with all its details, to a pre-existing table (the decline table) from which Genie reads.</strong> This feature ends at that write; Genie&#39;s read and consumption are out of scope.</p>
 </blockquote>
 <hr>
 <h2>1. Objective &amp; Definition of Success</h2>
@@ -104,9 +105,9 @@
 </tr>
 <tr>
 <td>G3</td>
-<td><strong>Back-off = no decline, nothing logged</strong></td>
-<td>If the CSP reconsiders, no decline is recorded and nothing is logged, and the booking stays with him. The back-off event itself is captured for measurement (MQ-1) — only the decline is absent, because no decline happened.</td>
-<td>R2 · AC-BACK-1a · AC-BACK-1b · MQ-1</td>
+<td><strong>Back-off = no decline, no decline row</strong></td>
+<td>If the CSP reconsiders <strong>or dismisses the sheet</strong>, no decline is recorded and no row is written to the decline table, and the booking stays with him. The back-off event itself is captured for measurement (MQ-1) — only the decline is absent, because no decline happened.</td>
+<td>R2 · AC-BACK-1a · AC-BACK-1b · AC-BACK-3 · MQ-1</td>
 </tr>
 <tr>
 <td>G4</td>
@@ -184,8 +185,8 @@
 <tr>
 <td>R2</td>
 <td>As a CSP who reconsiders, tapping &quot;OK, I&#39;ll connect&quot; returns me to the job with nothing held against me.</td>
-<td><strong>(a)</strong> On reconsider, submit no decline and keep the booking with the CSP. <strong>(b)</strong> Log nothing — no decline is written. <strong>(c)</strong> Record the back-off event — the confirmation bottom sheet was shown and he reconsidered — for measurement (MQ-1).</td>
-<td>Record a decline, or log anything, on a reconsider.</td>
+<td><strong>(a)</strong> On reconsider, submit no decline and keep the booking with the CSP. <strong>(b)</strong> Write no row to the decline table — no decline is recorded. <strong>(c)</strong> Record the back-off event — the confirmation bottom sheet was shown and he reconsidered — for measurement (MQ-1). <strong>(d)</strong> Treat a <strong>dismissal</strong> of the confirmation bottom sheet (closing it without choosing either action) as a reconsider — the same outcome as (a)–(c).</td>
+<td>Record a decline, or write a decline row, on a reconsider.</td>
 </tr>
 <tr>
 <td>R3</td>
@@ -215,7 +216,7 @@
     C -- "No (none nearby, or API slow/down)" --> T3["T3 — finalise decline; nothing logged (no informed decision)"]
     C -- "Yes" --> D["Location is Far confirmation bottom sheet — count, distances, list, notice"]
     D --> E{"CSP's choice"}
-    E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him; back-off logged"]
+    E -- "OK, I'll connect / dismisses sheet" --> T2["T2 — no decline; booking stays with him; back-off logged"]
     E -- "I won't be able to connect" --> T1["T1 — remove booking; record deliberate decline + rejected points; write to decline table; show confirmation"]
 </pre>
 <p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the app has already proceeded without the confirmation bottom sheet (T3), that stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
@@ -243,10 +244,10 @@
 <tr>
 <td>T2</td>
 <td>Confirmation bottom sheet shown</td>
-<td>CSP taps &quot;OK, I&#39;ll connect&quot;</td>
+<td>CSP taps &quot;OK, I&#39;ll connect&quot; <strong>or dismisses the sheet without choosing</strong></td>
 <td>—</td>
 <td>Reconsidered</td>
-<td>No decline recorded; nothing logged; booking stays with the CSP; the back-off is logged for measurement (R2, G3, MQ-1).</td>
+<td>No decline recorded; no row written to the decline table; booking stays with the CSP; the back-off is logged for measurement (R2, G3, MQ-1).</td>
 </tr>
 <tr>
 <td>T3</td>
@@ -267,7 +268,7 @@
 <h3>Location is Far confirmation bottom sheet (S1) — CSP app — decline &amp; install-failure</h3>
 <p><strong>States:</strong> loading (fetching points, brief wait) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
 <strong>Freshness:</strong> the points and distances reflect Genie&#39;s API response for this booking at the moment of submit.
-<strong>Two actions:</strong> the confirmation bottom sheet offers the CSP two actions — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider) (R1b).</p>
+<strong>Two actions:</strong> the confirmation bottom sheet offers the CSP two actions — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider) (R1b). Being a non-blocker popup, <strong>dismissing it without choosing is treated as a reconsider</strong> (T2, R2d).</p>
 <table>
 <thead>
 <tr>
@@ -393,9 +394,21 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>AC-SHOW-1</td>
-<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>3</strong> nearby points, <strong>When</strong> the decline is made, <strong>Then</strong> a <strong>confirmation bottom sheet</strong> is shown with those 3 points — the count, closest distance, list and notice — <strong>before the decline is finalised</strong>, offering <strong>&quot;I won&#39;t be able to connect&quot;</strong> or <strong>&quot;OK, I&#39;ll connect&quot;</strong>.</td>
+<td>AC-SHOW-1a</td>
+<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>3</strong> nearby points, <strong>When</strong> the decline is made, <strong>Then</strong> a <strong>confirmation bottom sheet</strong> is shown <strong>before the decline is finalised</strong>, offering exactly the two actions <strong>&quot;I won&#39;t be able to connect&quot;</strong> and <strong>&quot;OK, I&#39;ll connect&quot;</strong>.</td>
 <td>R1a · R1b</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-SHOW-1b</td>
+<td><strong>Given</strong> the confirmation bottom sheet is shown for <strong>3</strong> points, <strong>When</strong> it renders, <strong>Then</strong> it displays the <strong>count = 3</strong>, the <strong>list of all 3 points</strong>, the <strong>closest-point distance</strong> (unit and rounding per the Figma copy), and the <strong>notice</strong> that Wiom will stop sending him bookings there.</td>
+<td>R1a</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-SHOW-1c</td>
+<td><strong>Given</strong> Genie returns <strong>1</strong> nearby point (the minimum), <strong>When</strong> the decline is made, <strong>Then</strong> the <strong>confirmation bottom sheet is shown with that 1 point</strong> — the sheet is shown for any 1–4 points Genie returns (the cap is Genie&#39;s).</td>
+<td>R1a</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -417,24 +430,30 @@
 </tr>
 <tr>
 <td>AC-CONF-1b</td>
-<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the booking is <strong>removed from his feed</strong> and he sees the confirmation (S4) with his reason.</td>
+<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the <strong>booking is removed from his feed</strong>.</td>
 <td>R3a · T1</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-CONF-1c</td>
-<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the decline is <strong>written to the decline table</strong> for this booking carrying the <strong>connection id, customer id, CSP, capture point = decline, the reason, and the 3 points in the order shown</strong> — verifiable in the decline table.</td>
+<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> he is shown the <strong>confirmation (S4)</strong> stating his Location is Far reason.</td>
+<td>R3a · T1</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-CONF-1d</td>
+<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> a <strong>row is written to the decline table</strong> for this booking carrying the <strong>connection id, customer id, CSP, capture point = decline, the reason, and the 3 points in the order shown</strong> — verifiable in the decline table.</td>
 <td>R3c · T1 · G4</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-CONF-2</td>
-<td><strong>Given</strong> the confirmation bottom sheet showed <strong>3</strong> points while Genie&#39;s nearby-points response contained <strong>5</strong>, <strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the <strong>logged record</strong> carries <strong>exactly those 3 shown points and none of the 2</strong> that were not shown.</td>
+<td><strong>Given</strong> the confirmation bottom sheet showed <strong>3</strong> points while Genie&#39;s nearby-points response contained <strong>5</strong>, <strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the <strong>written row</strong> carries <strong>exactly those 3 shown points and none of the 2</strong> that were not shown.</td>
 <td>R3c · G1 · T1</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
-<h3>BACK — Reconsidered (T2)</h3>
+<h3>BACK — Reconsidered or dismissed (T2)</h3>
 <table>
 <thead>
 <tr>
@@ -446,13 +465,13 @@
 </thead>
 <tbody><tr>
 <td>AC-BACK-1a</td>
-<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> no decline or install-failure is recorded — the <strong>booking is untouched, still assigned to him and still acceptable</strong>, as if he never declined.</td>
+<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>no decline or install-failure is recorded</strong> — the booking <strong>remains assigned to him and remains acceptable</strong>, unchanged from before the sheet was shown.</td>
 <td>R1b · R2a · T2 · G3</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-BACK-1b</td>
-<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>nothing is logged</strong> — no decline is written to the decline table, and no decline record anywhere — because no decline occurred.</td>
+<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>no row is written to the decline table</strong> for this booking.</td>
 <td>R2b · T2 · G3</td>
 <td>Settled</td>
 </tr>
@@ -463,9 +482,21 @@
 <td>Settled</td>
 </tr>
 <tr>
-<td>AC-BACK-2</td>
-<td><strong>Given</strong> the same at the <strong>install-failure</strong> capture point, <strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> no install-failure is reported — the <strong>task stays accepted</strong> — and only the reconsideration is logged.</td>
+<td>AC-BACK-2a</td>
+<td><strong>Given</strong> the <strong>install-failure</strong> capture point, <strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>no install-failure is reported</strong> — the <strong>task remains assigned to him</strong>, unchanged.</td>
 <td>R2 · R5 · T2</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-BACK-2b</td>
+<td><strong>Given</strong> the same, <strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>exactly one back-off event</strong> is logged for this booking (per AC-BACK-1c).</td>
+<td>R2c · R5 · MQ-1</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-BACK-3</td>
+<td><strong>Given</strong> the confirmation bottom sheet is shown, <strong>When</strong> the CSP <strong>dismisses it without choosing</strong> either action, <strong>Then</strong> it is <strong>treated as a reconsider (T2)</strong> — the booking stays assigned to him, <strong>no decline is recorded or written to the decline table</strong>, and <strong>exactly one back-off event</strong> is logged.</td>
+<td>R2d · T2 · G3 · MQ-1</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
@@ -481,13 +512,13 @@
 </thead>
 <tbody><tr>
 <td>AC-STR-1</td>
-<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>no nearby points</strong> (none exist, or its API does not respond), <strong>When</strong> the decline is made, <strong>Then</strong> the decline is <strong>registered</strong> and <strong>no rejected-points record is logged</strong> (no points were shown, so no informed decision).</td>
+<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>zero nearby points (none exist)</strong>, <strong>When</strong> the decline is made, <strong>Then</strong> the decline is <strong>registered</strong> and <strong>no row is written to the decline table</strong> (no points were shown, so no informed decision).</td>
 <td>R4a · T3 · G2</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-STR-2</td>
-<td><strong>Given</strong> the same, <strong>When</strong> the decline is made, <strong>Then</strong> the CSP sees a neutral &quot;check skipped&quot; note and is <strong>never blocked</strong>.</td>
+<td><strong>Given</strong> the same, <strong>When</strong> the decline is made, <strong>Then</strong> the CSP is shown a note that the <strong>nearby-connections check was skipped (not an error)</strong> and the decline <strong>completes without being blocked</strong>.</td>
 <td>R4b · T3 · G2</td>
 <td>Settled</td>
 </tr>
@@ -503,26 +534,32 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>AC-WF-1</td>
-<td><strong>Given</strong> identical Genie points at both capture points, <strong>When</strong> one CSP declines with &quot;I won&#39;t be able to connect&quot; on a <strong>decline</strong> and another on an <strong>install-failure</strong>, <strong>Then</strong> both logged records carry the <strong>same points, in the same order</strong>, as rejected; the decline&#39;s capture point = <strong>decline</strong> and the install-failure&#39;s = <strong>install-failure</strong>.</td>
+<td>AC-WF-1a</td>
+<td><strong>Given</strong> identical Genie points at both capture points, <strong>When</strong> one CSP confirms &quot;I won&#39;t be able to connect&quot; on a <strong>decline</strong> and another on an <strong>install-failure</strong>, <strong>Then</strong> both <strong>written rows carry the same points, in the same order</strong>, as rejected.</td>
 <td>R5 · T1 · G4</td>
 <td>Settled</td>
 </tr>
 <tr>
+<td>AC-WF-1b</td>
+<td><strong>Given</strong> the same, <strong>Then</strong> the decline&#39;s row has <strong>capture point = decline</strong> and the install-failure&#39;s row has <strong>capture point = install-failure</strong>.</td>
+<td>R5 · R3c</td>
+<td>Settled</td>
+</tr>
+<tr>
 <td>AC-WF-2a</td>
-<td><strong>Given</strong> a CSP declines with &quot;I won&#39;t be able to connect&quot; on an <strong>install-failure</strong> (post-acceptance), <strong>When</strong> he confirms, <strong>Then</strong> the <strong>task stays accepted</strong> and <strong>no decline-exit or cooldown</strong> is applied to him.</td>
+<td><strong>Given</strong> a post-acceptance <strong>install-failure</strong>, <strong>When</strong> the CSP confirms &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the <strong>install-failure is registered as deliberate</strong> and he is shown the <strong>confirmation (S4)</strong>.</td>
 <td>R3a · R5 · T1</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-WF-2b</td>
-<td><strong>Given</strong> the same, <strong>When</strong> he confirms, <strong>Then</strong> the booking <strong>re-enters routing (available for re-assignment)</strong>, not removed from him.</td>
+<td><strong>Given</strong> the same, <strong>When</strong> he confirms, <strong>Then</strong> the <strong>task is handed back for re-routing</strong> — it re-enters routing, available for re-assignment (R3a).</td>
 <td>R3a · R5 · T1</td>
 <td>Settled</td>
 </tr>
 <tr>
 <td>AC-WF-2c</td>
-<td><strong>Given</strong> the same, <strong>When</strong> he confirms, <strong>Then</strong> the logged record&#39;s <strong>capture point = install-failure</strong>.</td>
+<td><strong>Given</strong> the same, <strong>When</strong> he confirms, <strong>Then</strong> the <strong>written row&#39;s capture point = install-failure</strong>.</td>
 <td>R3c · R5 · T1</td>
 <td>Settled</td>
 </tr>
@@ -539,7 +576,7 @@
 </thead>
 <tbody><tr>
 <td>AC-GRD-1</td>
-<td><strong>Given</strong> a CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>When</strong> the decline is made, <strong>Then</strong> the decline proceeds through the <strong>normal platform flow</strong> — the booking leaves this CSP and re-enters routing as usual (DAS / CLOS unaffected) — and <strong>this feature itself makes no call to Genie and issues no de-listing / coverage action</strong>; its only <strong>new</strong> outbound effect is the one write to the decline table.</td>
+<td><strong>Given</strong> a CSP confirms &quot;I won&#39;t be able to connect&quot;, <strong>When</strong> the decline is made, <strong>Then</strong> this feature&#39;s <strong>only new outbound effect is the single write to the decline table</strong> — it makes <strong>no call to Genie and takes no de-listing / coverage action</strong>. (The decline itself routes as normal — DAS / CLOS as today, per G4.)</td>
 <td>G4 · R3</td>
 <td>Settled</td>
 </tr>
@@ -556,7 +593,7 @@
 </thead>
 <tbody><tr>
 <td>AC-FAIL-1</td>
-<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie&#39;s API does not respond, <strong>When</strong> the decline is made, <strong>Then</strong> the CSP completes it without the confirmation bottom sheet — <strong>never blocked or left waiting</strong> — and <strong>nothing is logged</strong> (T3).</td>
+<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie&#39;s API does not respond within the Eng-owned fetch timeout, <strong>When</strong> the decline is made, <strong>Then</strong> the decline <strong>completes without the confirmation bottom sheet</strong>, the CSP is <strong>not blocked and the decline is not held pending the response</strong>, and <strong>no row is written to the decline table</strong>.</td>
 <td>R4a · G2 · T3</td>
 <td>Settled</td>
 </tr>
@@ -573,7 +610,7 @@
 </thead>
 <tbody><tr>
 <td>AC-REG-1</td>
-<td><strong>Given</strong> a CSP declines for any reason <strong>other than Location is Far</strong>, <strong>When</strong> the decline is made, <strong>Then</strong> <strong>no confirmation bottom sheet appears, no nearby-points fetch is made, and nothing is logged</strong> — the Part 1 reason-capture is the only behaviour.</td>
+<td><strong>Given</strong> a CSP declines for any reason <strong>other than Location is Far</strong>, <strong>When</strong> the decline is made, <strong>Then</strong> <strong>no confirmation bottom sheet appears, no nearby-points fetch is made, and no row is written to the decline table</strong> — the Part 1 reason-capture is the only behaviour.</td>
 <td>§1 Boundary · G5</td>
 <td>Settled</td>
 </tr>
@@ -607,8 +644,14 @@
 </thead>
 <tbody><tr>
 <td>AC-DUP-1</td>
-<td><strong>Given</strong> the confirmation bottom sheet is shown with points, <strong>When</strong> the CSP <strong>double-taps</strong> &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> <strong>exactly one</strong> decline is registered and <strong>one</strong> record is logged for that booking, and the second tap adds nothing (the confirmation S4 is shown once).</td>
+<td><strong>Given</strong> the confirmation bottom sheet is shown with points, <strong>When</strong> the CSP <strong>double-taps</strong> &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> <strong>exactly one</strong> decline is registered and <strong>one</strong> row is written to the decline table for that booking, and the second tap adds nothing (the confirmation S4 is shown once).</td>
 <td>T1</td>
+<td>Settled</td>
+</tr>
+<tr>
+<td>AC-DUP-2</td>
+<td><strong>Given</strong> the confirmation bottom sheet is shown with points, <strong>When</strong> the CSP <strong>double-taps</strong> &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>exactly one</strong> back-off event is logged for that booking and the booking stays assigned to him (the second tap adds nothing).</td>
+<td>T2 · MQ-1</td>
 <td>Settled</td>
 </tr>
 </tbody></table>
