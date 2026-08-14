@@ -2,8 +2,10 @@
 
 | | | | |
 |---|---|---|---|
-| **Owner** — Ashish Raj (PM) | **Reviewer** — Saurabh Goyal | **Status** — Signed off | **Sign-off** — Signed off · 12 Aug 2026 |
-| **Version** — v1.0 · 12 Aug 2026 | **Consulted — Genie (serviceability)** — Maanas | | |
+| **Owner** — Ashish Raj (PM) | **Reviewer** — Saurabh Goyal | **Status** — Signed off | **Sign-off** — Signed off · v1.1 · 14 Aug 2026 |
+| **Version** — v1.1 · 14 Aug 2026 | **Consulted — Genie (serviceability)** — Maanas | | |
+
+> **v1.1 · 14 Aug 2026 — §7 amended.** The acceptance criteria were rewritten to be **atomic and observable** (per an AC-quality review): bundled ACs split, narrative outcomes bound to observable domain facts, malformed Given/When fixed. Product rulings baked in — a back-off **logs only** (no decline, no downstream signal); the "submit" wording is dropped for **"declines / reconsiders"**; and the Genie wait/timeout number is removed. Rules, transitions, guardrails and scope are unchanged.
 
 ---
 
@@ -23,7 +25,7 @@
 |---|---|---|---|
 | G1 | **Only shown points are sent to Genie** | The signal sent to Genie on a decline / install-failure carries only the points the CSP was shown — never a point he was not shown. | R3c · AC-CONF-2 · MQ-2 |
 | G2 | **Never block the decline** | If the nearby points can't be shown — none exist, or Genie's API is slow or down — the CSP can still complete his decline; he is never trapped. | R4 · AC-FAIL-1 · MQ-3 |
-| G3 | **Back-off = no decline, no signal** | If the CSP reconsiders, no decline is recorded and no signal is sent to Genie, and the booking stays with him. The back-off event itself is captured for measurement (MQ-1) — only the decline is absent, because no decline happened. | R2 · AC-BACK-1 · MQ-1 |
+| G3 | **Back-off = no decline, no signal** | If the CSP reconsiders, no decline is recorded and no signal is sent to Genie, and the booking stays with him. The back-off event itself is captured for measurement (MQ-1) — only the decline is absent, because no decline happened. | R2 · AC-BACK-1a · AC-BACK-1b · MQ-1 |
 | G4 | **Capture-only** | This feature captures and emits a signal; Genie decides the unit, threshold and consequence, and DAS routes. It commands nothing. | R3 · AC-GRD-1 · MQ-2 |
 | G5 | **Emitted only for this reason** | A signal is pushed to Genie **only** for the Location is Far reason (booking too far) — never for any other decline / install-failure reason. | R3 · AC-REG-1 · MQ-2 |
 
@@ -144,61 +146,71 @@ Lifecycle of a **Location is Far decline assist** (created when a CSP selects th
 
 ## 7. Acceptance Criteria
 
+**Shared precondition (CONF &amp; BACK groups).** A CSP with a booking in the **pre-acceptance state**; Genie returns **3** nearby active/splitter points for it; he has selected the "Location is Far" reason *(the reason value is owned by the Reason Set PRD, Part 1)*; the intercept (S1) is showing those 3 points.
+
 ### CONF — Confirmed "I won't be able to connect" (T1)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-CONF-1 | **Given** a CSP declining a booking with the Location is Far reason (booking too far) and is shown 3 of his own active connections within Genie's range, **When** he taps "I won't be able to connect", **Then** the Location is Far decline is recorded as deliberate, the booking is removed and he sees a confirmation with his reason (S4), and a signal is **pushed** to Genie carrying the connection + customer id, the CSP, that it was a decline for the Location is Far reason, and those 3 points **in the order shown** as rejected. | R1a · R1b · R3a · R3b · R3c · T1 · G4 | Settled |
-| AC-CONF-2 | **Given** the same confirm, **When** the signal is emitted, **Then** it names only the points that were shown — no point the CSP was not shown ever appears in it. | R3c · G1 · T1 | Settled |
+| AC-CONF-1a | **When** the CSP **declines** with "I won't be able to connect", **Then** a decline for this (booking, CSP) is **registered carrying the 3 points he was shown, in the order shown**, as the points he rejects. | R1b · R3a · R3b · T1 | Settled |
+| AC-CONF-1b | **When** the CSP declines with "I won't be able to connect", **Then** the booking is **removed from his feed** and he sees the confirmation (S4) with his reason. | R3a · T1 | Settled |
+| AC-CONF-1c | **When** the CSP declines with "I won't be able to connect", **Then** a signal is emitted to Genie for this booking carrying the **connection id, customer id, CSP, capture point = decline, the reason, and the 3 points in the order shown** — verifiable at Genie's receive boundary (Genie PRD). | R3c · T1 · G4 | Settled |
+| AC-CONF-2 | **Given** the intercept showed **3** points while Genie's nearby-points response contained **5**, **When** the CSP declines with "I won't be able to connect", **Then** the emitted signal carries **exactly those 3 shown points and none of the 2** that were not shown. | R3c · G1 · T1 | Settled |
 
 ### BACK — Reconsidered (T2)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-BACK-1 | **Given** a CSP shown his nearby connections on a Location is Far decline, **When** he taps "OK, I'll connect", **Then** no decline is recorded and no signal is sent to Genie, the booking stays with him, and the back-off event (intercept shown → reconsidered) is captured for measurement. | R1b · R2a · R2b · R2c · T2 · G3 · MQ-1 | Settled |
+| AC-BACK-1a | **When** the CSP taps "OK, I'll connect", **Then** no decline or install-failure is recorded — the **booking is untouched, still assigned to him and still acceptable**, as if he never declined. | R1b · R2a · T2 · G3 | Settled |
+| AC-BACK-1b | **When** the CSP taps "OK, I'll connect", **Then** **nothing is emitted** — no signal to Genie and no decline signal to any other service — because no decline occurred. | R2b · T2 · G3 | Settled |
+| AC-BACK-1c | **When** the CSP taps "OK, I'll connect", **Then** **exactly one back-off event** is logged for this booking, **correlated by booking id** to the moment the intercept was shown, carrying the **count of points shown (3)**. | R2c · T2 · MQ-1 | Settled |
+| AC-BACK-2 | **Given** the same at the **install-failure** capture point, **When** the CSP taps "OK, I'll connect", **Then** no install-failure is reported — the **task stays accepted** — and only the reconsideration is logged. | R2 · R5 · T2 | Settled |
 
 ### STR — Proceeded without the assist (T3)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-STR-1 | **Given** a CSP selects the Location is Far reason and Genie returns no nearby points, **When** he confirms the decline, **Then** the Location is Far decline is recorded, **no signal is sent to Genie** (no points were shown, so no informed decision), and he is told the nearby check was skipped. | R4a · R4b · T3 · G2 | Settled |
+| AC-STR-1 | **Given** a CSP declines with the Location is Far reason and Genie returns **no nearby points** (none exist, or its API does not respond), **When** the decline is made, **Then** the decline is **registered** and **no signal is emitted to Genie** (no points were shown, so no informed decision). | R4a · T3 · G2 | Settled |
+| AC-STR-2 | **Given** the same, **When** the decline is made, **Then** the CSP sees a neutral "check skipped" note and is **never blocked**. | R4b · T3 · G2 | Settled |
 
 ### WF — Workflows (both capture points)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-WF-1 | **Given** the same Genie points, **When** one CSP hits the Location is Far reason on a **decline** and another on an **install-failure report**, **Then** both see the identical intercept and, on "I won't be able to connect", both emit a signal to Genie with the rejected points — the only differences recorded are the capture point and the outcome copy (booking removed vs failure recorded). | R5 · T1 · G4 | Settled |
-| AC-WF-2 | **Given** a CSP reports an **install-failure** (post-acceptance) with the Location is Far reason and is shown his nearby connections, **When** he taps "I won't be able to connect", **Then** the failure is recorded and the task is handed back for re-routing (the booking is **not** shown as "removed"), and the signal pushed to Genie carries the capture point = install-failure. | R3a · R5 · T1 | Settled |
+| AC-WF-1 | **Given** identical Genie points at both capture points, **When** one CSP declines with "I won't be able to connect" on a **decline** and another on an **install-failure**, **Then** both emitted signals carry the **same points, in the same order**, as rejected; the decline's capture point = **decline** and the install-failure's = **install-failure**. | R5 · T1 · G4 | Settled |
+| AC-WF-2a | **Given** a CSP declines with "I won't be able to connect" on an **install-failure** (post-acceptance), **When** he confirms, **Then** the **task stays accepted** and **no decline-exit or cooldown** is applied to him. | R3a · R5 · T1 | Settled |
+| AC-WF-2b | **Given** the same, **When** he confirms, **Then** the booking **re-enters routing (available for re-assignment)**, not removed from him. | R3a · R5 · T1 | Settled |
+| AC-WF-2c | **Given** the same, **When** he confirms, **Then** the emitted signal's **capture point = install-failure**. | R3c · R5 · T1 | Settled |
 
 ### GRD — Guardrails
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-GRD-1 | **Given** a confirmed Location is Far decline with rejected points, **When** the signal reaches Genie, **Then** this feature has taken no routing or de-listing action itself — Genie decides the unit, threshold and consequence. | G4 · R3 | Settled |
+| AC-GRD-1 | **Given** a CSP declines with "I won't be able to connect", **When** the decline is made, **Then** this feature issues **no re-route, no re-assignment, and no de-listing call** — its only outbound effect is the one signal to Genie. | G4 · R3 | Settled |
 
-### FAIL — Failure window (Genie API timeout)
+### FAIL — Failure window (Genie API no response)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-FAIL-1 | **Given** a CSP selects the Location is Far reason, **When** Genie's API has not returned points in time, **Then** the app lets him complete the decline without the intercept — never blocked or left spinning — and **no signal is sent to Genie**. | R4a · G2 · T3 | Settled |
+| AC-FAIL-1 | **Given** a CSP declines with the Location is Far reason and Genie's API does not respond, **When** the decline is made, **Then** the CSP completes it without the intercept — **never blocked or left waiting** — and **no signal is emitted** (T3). | R4a · G2 · T3 | Settled |
 
 ### REG — Regression (no downstream command)
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-REG-1 | **Given** this feature ships, **When** a CSP declines for any reason **other than Location is Far**, **Then** the reason-capture flow (Part 1) is unchanged — no intercept, no Genie fetch, **and no signal pushed to Genie** — and routing / DAS behave exactly as before. | §1 Boundary · G5 | Settled |
+| AC-REG-1 | **Given** a CSP declines for any reason **other than Location is Far**, **When** the decline is made, **Then** **no intercept appears, no nearby-points fetch is made, and no signal is emitted to Genie** — the Part 1 reason-capture is the only behaviour. | §1 Boundary · G5 | Settled |
 
 ### RACE — Races
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-RACE-1 | **Given** the app already proceeded without the intercept and the decline was recorded straight (T3), **When** Genie's points arrive afterwards, **Then** they are ignored — the recorded decline stands and no intercept is retro-shown. | §3a precedence | Settled |
+| AC-RACE-1 | **Given** the flow already proceeded without the intercept and the decline is registered (T3), **When** Genie's points arrive later, **Then** they are **ignored** — no intercept appears and the registered decline is **unchanged**. | §3a precedence | Settled |
 
 ### DUP — Duplicate trigger
 
 | AC | Given / When / Then | Verifies | Status |
 |---|---|---|---|
-| AC-DUP-1 | **Given** a Location is Far decline already recorded and emitted, **When** the CSP double-taps "I won't be able to connect", **Then** exactly one decline and one signal exist for that event. | T1 | Settled |
+| AC-DUP-1 | **Given** the intercept is shown with points, **When** the CSP **double-taps** "I won't be able to connect", **Then** **exactly one** decline is registered and **one** signal is emitted for that booking, and the second tap adds nothing (the confirmation S4 is shown once). | T1 | Settled |
 
 ---
 
