@@ -72,14 +72,14 @@
 </tr>
 </tbody></table>
 <blockquote>
-<p><strong>v1.2 · 14 Aug 2026.</strong> Two changes. <strong>(1)</strong> The CSP world <strong>no longer sends a signal to Genie.</strong> Every Location is Far decline / install-failure is <strong>logged, with all its details, to a pre-existing table — the decline log — from which Genie reads.</strong> This feature ends at the log write; Genie&#39;s read and consumption are out of scope. <strong>(2)</strong> The §7 acceptance criteria were rewritten to be <strong>atomic and observable</strong> (per an AC-quality review), with product rulings baked in — a back-off logs only (no decline at all), the &quot;submit&quot; wording is dropped for &quot;declines / reconsiders&quot;, and the Genie wait/timeout number is removed. Rules, transitions and scope are otherwise unchanged.</p>
+<p><strong>v1.2 · 14 Aug 2026.</strong> Two changes. <strong>(1)</strong> The CSP world <strong>no longer sends a signal to Genie.</strong> Every Location is Far decline / install-failure is <strong>logged, with all its details, to a pre-existing table — the decline table — from which Genie reads.</strong> This feature ends at the write to the decline table; Genie&#39;s read and consumption are out of scope. <strong>(2)</strong> The §7 acceptance criteria were rewritten to be <strong>atomic and observable</strong> (per an AC-quality review), with product rulings baked in — a back-off logs only (no decline at all), the &quot;submit&quot; wording is dropped for &quot;declines / reconsiders&quot;, and the Genie wait/timeout number is removed. Rules, transitions and scope are otherwise unchanged.</p>
 </blockquote>
 <hr>
 <h2>1. Objective &amp; Definition of Success</h2>
-<p><strong>Objective.</strong> Turn a CSP&#39;s &quot;this booking is too far from me&quot; decline into a clean, point-level <strong>record the routing system can act on</strong> — so Wiom sends each booking to the <strong>most relevant CSP first</strong>, and the CSP stops being handed far, irrelevant jobs. When a CSP declines a booking as too far, the app shows him the connections he already runs nearby; this exists to make his answer <strong>deliberate and accurate</strong> — not to talk him out of declining — so a reflex tap on a job he could actually serve doesn&#39;t pollute the loop. When he confirms, we capture the exact points he is rejecting and <strong>log them to the decline log</strong>. <strong>The win is mutual:</strong> the CSP is no longer surfaced for bookings he genuinely can&#39;t serve, and Wiom routes to a nearer CSP instead. This feature owns the <strong>capture and the log-write</strong>; Genie <strong>reads the decline log</strong> and acts, and DAS is affected only indirectly — it routes on what Genie does next.</p>
+<p><strong>Objective.</strong> Turn a CSP&#39;s &quot;this booking is too far from me&quot; decline into a clean, point-level <strong>record the routing system can act on</strong> — so Wiom sends each booking to the <strong>most relevant CSP first</strong>, and the CSP stops being handed far, irrelevant jobs. When a CSP declines a booking as too far, the app shows him the connections and splitter points he already runs nearby; this exists to make his answer <strong>deliberate and accurate</strong> — not to talk him out of declining — so a reflex tap on a job he could actually serve doesn&#39;t pollute the loop. When he confirms, we capture the exact points he is rejecting and <strong>log them to the decline table</strong>. <strong>The win is mutual:</strong> the CSP is no longer surfaced for bookings he genuinely can&#39;t serve, and Wiom routes to a nearer CSP instead. This feature owns the <strong>capture and the write to the decline table</strong>; Genie <strong>reads the decline table</strong> and acts, and DAS is affected only indirectly — it routes on what Genie does next.</p>
 <p><strong>What success is — and isn&#39;t.</strong> Success is a <strong>trustworthy feedback loop into routing</strong>, not a lower decline rate and not making CSPs reconsider. A confirmed &quot;too far&quot; decline is a <em>good</em> outcome — it is correct information the routing system needs. The confirmation bottom sheet&#39;s only job is to keep that information accurate.</p>
-<p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the Location is Far reason — the CSP says <strong>the booking is too far from him</strong> (the location is not serviceable / too far) — at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>confirmation bottom sheet</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>logging the decline, with its rejected points, to the decline log</strong> (a pre-existing table from which Genie reads). Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the logged record (G1).</p>
-<p><strong>What Genie does with the logged decline is out of scope</strong> — the unit, threshold, de-listing and any re-routing are all Genie&#39;s. This feature <strong>ends at the log write</strong>: the decline, with its details, is written to a <strong>pre-existing table (the decline log)</strong>, and <strong>Genie reads from that table</strong> (R3c). The feature makes no call to Genie.</p>
+<p><strong>Boundary.</strong> This spec governs the <strong>CSP-side experience</strong> for the Location is Far reason — the CSP says <strong>the booking is too far from him</strong> (the location is not serviceable / too far) — at both capture points — a <strong>decline</strong> (before acceptance) and an <strong>install-failure report</strong> (any time after acceptance). It covers: fetching the CSP&#39;s nearby active/splitter points from <strong>Genie&#39;s API</strong> and showing them in a <strong>confirmation bottom sheet</strong>; the back-off vs confirm outcomes; capturing the deliberate decline and the points he was shown and rejected; and <strong>logging the decline, with its rejected points, to the decline table</strong> (a pre-existing table from which Genie reads). Out of scope: <strong>Genie&#39;s nearby-points API and its definition of &quot;nearby&quot;</strong> (a separate Genie PRD); the <strong>unit</strong>, the <strong>threshold</strong>, and the <strong>consequence</strong> — de-listing the point / the candidate-list distance calc — all owned by <strong>Genie</strong>; <strong>DAS</strong> routing; <strong>ops-calling verification</strong> (a later phase — V1 relies on accumulation, which Genie owns); and the reason picker itself (the signed-off Reason Set PRD, Part 1). Only points <strong>shown</strong> to the CSP can appear in the logged record (G1).</p>
+<p><strong>What Genie does with the logged decline is out of scope</strong> — the unit, threshold, de-listing and any re-routing are all Genie&#39;s. This feature <strong>ends at the write to the decline table</strong>: the decline, with its details, is written to a <strong>pre-existing table (the decline table)</strong>, and <strong>Genie reads from that table</strong> (R3c). The feature makes no call to Genie.</p>
 <h3>Guardrails — promises that hold on every path</h3>
 <table>
 <thead>
@@ -111,7 +111,7 @@
 <tr>
 <td>G4</td>
 <td><strong>Capture-and-log only</strong></td>
-<td>This feature captures the decline and logs it; Genie reads the log and decides the unit, threshold and consequence, and DAS routes. It commands nothing.</td>
+<td>This feature captures the decline and logs it; the decline itself routes as normal (DAS / CLOS as today). Genie later reads the decline table and decides the unit, threshold and consequence. This feature commands nothing.</td>
 <td>R3 · AC-GRD-1 · MQ-2</td>
 </tr>
 <tr>
@@ -178,7 +178,7 @@
 <tbody><tr>
 <td>R1</td>
 <td>As a CSP about to decline a booking because it&#39;s too far from me, I first see the connections I already run nearby, so I don&#39;t refuse a job I can serve.</td>
-<td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the Location is Far reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>confirmation bottom sheet</strong> (blocking — he must choose one) — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised. <strong>(b)</strong> Require an explicit choice — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
+<td><strong>(a)</strong> When he <strong>submits</strong> a decline / install-failure with the Location is Far reason, fetch his nearby active/splitter points from <strong>Genie&#39;s API</strong> and show a <strong>confirmation bottom sheet</strong> — the count of nearby connections, the closest distance, the list, and a plain notice that we will stop sending him bookings here — before the decline is finalised. <strong>(b)</strong> Offer two explicit actions — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider).</td>
 <td>Finalise the Location is Far decline without the confirmation bottom sheet when nearby points exist and can be shown.</td>
 </tr>
 <tr>
@@ -189,8 +189,8 @@
 </tr>
 <tr>
 <td>R3</td>
-<td>As Wiom, when the CSP confirms &quot;I won&#39;t be able to connect&quot;, I remove the booking, capture the deliberate decline and the points he rejected, and log them to the decline log.</td>
-<td><strong>(a)</strong> Record the Location is Far decline / install-failure as <strong>deliberate</strong> — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a <strong>decline</strong> (pre-acceptance) removes the booking; an <strong>install-failure</strong> (post-acceptance) records the failure and hands the task back for re-routing. <strong>(b)</strong> Capture the exact points he was shown (from Genie&#39;s API), <strong>in the order they were shown</strong>, as the points he is rejecting. <strong>(c)</strong> <strong>Log</strong> the decline to the <strong>decline log</strong> carrying: the <strong>connection id and customer id</strong> (the booking), the <strong>CSP</strong>, whether it was a <strong>decline or an install-failure</strong>, the <strong>Location is Far reason</strong> (booking too far), and the <strong>points he was shown, in order</strong>, as the points he rejected.</td>
+<td>As Wiom, when the CSP confirms &quot;I won&#39;t be able to connect&quot;, I remove the booking, capture the deliberate decline and the points he rejected, and log them to the decline table.</td>
+<td><strong>(a)</strong> Record the Location is Far decline / install-failure as <strong>deliberate</strong> — made despite seeing the points — and show a confirmation with his reason (S4). The booking outcome follows the capture point: a <strong>decline</strong> (pre-acceptance) removes the booking; an <strong>install-failure</strong> (post-acceptance) records the failure and hands the task back for re-routing. <strong>(b)</strong> Capture the exact points he was shown (from Genie&#39;s API), <strong>in the order they were shown</strong>, as the points he is rejecting. <strong>(c)</strong> <strong>Log</strong> the decline to the <strong>decline table</strong> carrying: the <strong>connection id and customer id</strong> (the booking), the <strong>CSP</strong>, whether it was a <strong>decline or an install-failure</strong>, the <strong>Location is Far reason</strong> (booking too far), and the <strong>points he was shown, in order</strong>, as the points he rejected.</td>
 <td>Log any point that was not shown to him (G1); log the rejected-points record for any reason other than Location is Far (G5).</td>
 </tr>
 <tr>
@@ -216,7 +216,7 @@
     C -- "Yes" --> D["Location is Far confirmation bottom sheet — count, distances, list, notice"]
     D --> E{"CSP's choice"}
     E -- "OK, I'll connect" --> T2["T2 — no decline; booking stays with him; back-off logged"]
-    E -- "I won't be able to connect" --> T1["T1 — remove booking; record deliberate decline + rejected points; write to decline log; show confirmation"]
+    E -- "I won't be able to connect" --> T1["T1 — remove booking; record deliberate decline + rejected points; write to decline table; show confirmation"]
 </pre>
 <p><strong>Precedence:</strong> if Genie&#39;s points arrive <strong>after</strong> the app has already proceeded without the confirmation bottom sheet (T3), that stands — the decline is already recorded; the late points are ignored (AC-RACE-1).</p>
 <h3>3b. State transition table — canon</h3>
@@ -238,7 +238,7 @@
 <td>CSP taps &quot;I won&#39;t be able to connect&quot;</td>
 <td>Points were shown</td>
 <td>Recorded &amp; logged</td>
-<td>Booking removed from him with a confirmation (&quot;booking removed&quot; + his reason, S4); Location is Far decline / install-failure recorded as <strong>deliberate</strong> (R3a); rejected points = the points shown (R3b); decline written to the decline log — CSP, capture point, rejected points (R3c, G1, G4).</td>
+<td>Booking removed from him with a confirmation (&quot;booking removed&quot; + his reason, S4); Location is Far decline / install-failure recorded as <strong>deliberate</strong> (R3a); rejected points = the points shown (R3b); decline written to the decline table — CSP, capture point, rejected points (R3c, G1, G4).</td>
 </tr>
 <tr>
 <td>T2</td>
@@ -267,7 +267,7 @@
 <h3>Location is Far confirmation bottom sheet (S1) — CSP app — decline &amp; install-failure</h3>
 <p><strong>States:</strong> loading (fetching points, brief wait) · showing (his nearby connections + notice + two actions) · skipped (no points / API not in time — decline finalised, R4 / T3)
 <strong>Freshness:</strong> the points and distances reflect Genie&#39;s API response for this booking at the moment of submit.
-<strong>Blocking:</strong> the confirmation bottom sheet is <strong>blocking</strong> — the CSP must pick one of the two actions; there is no dismiss-without-choosing (R1b).</p>
+<strong>Two actions:</strong> the confirmation bottom sheet offers the CSP two actions — <strong>&quot;I won&#39;t be able to connect&quot;</strong> (confirm) or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (reconsider) (R1b).</p>
 <table>
 <thead>
 <tr>
@@ -294,7 +294,7 @@
 <tr>
 <td>Action — &quot;I won&#39;t be able to connect&quot;</td>
 <td>T1 via §3a</td>
-<td>confirms the decline; removes the booking; records the deliberate decline + the shown points as rejected; logs to the decline log (R3) → S4</td>
+<td>confirms the decline; removes the booking; records the deliberate decline + the shown points as rejected; logs to the decline table (R3) → S4</td>
 </tr>
 <tr>
 <td>Action — &quot;OK, I&#39;ll connect&quot;</td>
@@ -394,7 +394,7 @@
 </thead>
 <tbody><tr>
 <td>AC-SHOW-1</td>
-<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>3</strong> nearby points, <strong>When</strong> the decline is made, <strong>Then</strong> a <strong>blocking confirmation bottom sheet</strong> is shown with those 3 points — the count, closest distance, list and notice — <strong>before the decline is finalised</strong>, and he must pick <strong>&quot;I won&#39;t be able to connect&quot;</strong> or <strong>&quot;OK, I&#39;ll connect&quot;</strong> (no dismiss-without-choosing).</td>
+<td><strong>Given</strong> a CSP declines with the Location is Far reason and Genie returns <strong>3</strong> nearby points, <strong>When</strong> the decline is made, <strong>Then</strong> a <strong>confirmation bottom sheet</strong> is shown with those 3 points — the count, closest distance, list and notice — <strong>before the decline is finalised</strong>, offering <strong>&quot;I won&#39;t be able to connect&quot;</strong> or <strong>&quot;OK, I&#39;ll connect&quot;</strong>.</td>
 <td>R1a · R1b</td>
 <td>Settled</td>
 </tr>
@@ -423,7 +423,7 @@
 </tr>
 <tr>
 <td>AC-CONF-1c</td>
-<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the decline is <strong>written to the decline log</strong> for this booking carrying the <strong>connection id, customer id, CSP, capture point = decline, the reason, and the 3 points in the order shown</strong> — verifiable in the decline log.</td>
+<td><strong>When</strong> the CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>Then</strong> the decline is <strong>written to the decline table</strong> for this booking carrying the <strong>connection id, customer id, CSP, capture point = decline, the reason, and the 3 points in the order shown</strong> — verifiable in the decline table.</td>
 <td>R3c · T1 · G4</td>
 <td>Settled</td>
 </tr>
@@ -452,7 +452,7 @@
 </tr>
 <tr>
 <td>AC-BACK-1b</td>
-<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>nothing is logged</strong> — no decline is written to the decline log, and no decline record anywhere — because no decline occurred.</td>
+<td><strong>When</strong> the CSP taps &quot;OK, I&#39;ll connect&quot;, <strong>Then</strong> <strong>nothing is logged</strong> — no decline is written to the decline table, and no decline record anywhere — because no decline occurred.</td>
 <td>R2b · T2 · G3</td>
 <td>Settled</td>
 </tr>
@@ -539,7 +539,7 @@
 </thead>
 <tbody><tr>
 <td>AC-GRD-1</td>
-<td><strong>Given</strong> a CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>When</strong> the decline is made, <strong>Then</strong> this feature issues <strong>no re-route, no re-assignment, and no de-listing call</strong> — its only outbound effect is the one write to the decline log.</td>
+<td><strong>Given</strong> a CSP declines with &quot;I won&#39;t be able to connect&quot;, <strong>When</strong> the decline is made, <strong>Then</strong> the decline proceeds through the <strong>normal platform flow</strong> — the booking leaves this CSP and re-enters routing as usual (DAS / CLOS unaffected) — and <strong>this feature itself makes no call to Genie and issues no de-listing / coverage action</strong>; its only <strong>new</strong> outbound effect is the one write to the decline table.</td>
 <td>G4 · R3</td>
 <td>Settled</td>
 </tr>
@@ -639,11 +639,11 @@
 </tr>
 <tr>
 <td>Rejected points</td>
-<td>The nearby points the CSP was shown and still declined over — the payload this feature logs to the decline log. Never contains a point he was not shown (G1).</td>
+<td>The nearby points the CSP was shown and still declined over — the payload this feature logs to the decline table. Never contains a point he was not shown (G1).</td>
 <td>—</td>
 </tr>
 <tr>
-<td>Decline log</td>
+<td>Decline table</td>
 <td><strong>Canonical definition:</strong> the pre-existing table where declines and install-failures are recorded and <strong>from which Genie reads.</strong> When a CSP confirms a Location is Far decline after seeing his nearby points, this feature writes the decline there with all its details — connection id + customer id, the CSP, decline vs install-failure, the Location is Far reason, and the rejected points, in order. Written only for this reason (G5); never carries a point not shown (G1). This feature ends at the write; Genie&#39;s read is its own.</td>
 <td>—</td>
 </tr>
@@ -681,7 +681,7 @@
 <td>R3 · G1</td>
 </tr>
 <tr>
-<td>Write the decline to the pre-existing <strong>decline log</strong> — connection + customer id, CSP, decline vs install-failure, the Location is Far reason, and the ordered points shown as rejected — for the Location is Far reason only, taking no routing or de-listing action itself; Genie reads from that table.</td>
+<td>Write the decline to the pre-existing <strong>decline table</strong> — connection + customer id, CSP, decline vs install-failure, the Location is Far reason, and the ordered points shown as rejected — for the Location is Far reason only, taking no routing or de-listing action itself; Genie reads from that table.</td>
 <td>R3c · G4 · G5</td>
 </tr>
 <tr>
@@ -710,8 +710,8 @@
 </thead>
 <tbody><tr>
 <td>What/why-only — no mechanism (J3 envelope purity)</td>
-<td>The PRD names the system-of-record: the decline is <strong>written to a pre-existing table (the decline log)</strong> that Genie reads, rather than pushed to Genie (§1 Boundary, R3c, §9)</td>
-<td>PM&#39;s call — the decline log is the existing system-of-record and Genie already reads it, so the feature ends at the log write and introduces no new transport to Genie</td>
+<td>The PRD names the system-of-record: the decline is <strong>written to a pre-existing table (the decline table)</strong> that Genie reads, rather than pushed to Genie (§1 Boundary, R3c, §9)</td>
+<td>PM&#39;s call — the decline table is the existing system-of-record and Genie already reads it, so the feature ends at the write to the decline table and introduces no new transport to Genie</td>
 <td>Ashish Raj (PM)</td>
 </tr>
 </tbody></table>
